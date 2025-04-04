@@ -40,7 +40,9 @@ export const configureEcho = (config: EchoOptions<any>): void => {
 const getEchoInstance = (): EchoInstance | null => {
     if (!echoInstance) {
         if (!echoConfig) {
-            console.error('Echo has not been configured. Please call configureEcho() with your configuration options before using Echo.');
+            console.error(
+                'Echo has not been configured. Please call configureEcho() with your configuration options before using Echo.'
+            );
             return null;
         }
 
@@ -93,13 +95,7 @@ interface UseEchoParams {
 
 // The main composable for using Echo in Vue components
 export const useEcho = (params: UseEchoParams) => {
-    const {
-        channel: channelName,
-        event,
-        callback,
-        dependencies = [],
-        visibility = 'private'
-    } = params;
+    const { channel: channelName, event, callback, dependencies = [], visibility = 'private' } = params;
     // Use ref to store the current callback
     const eventCallback = ref(callback);
 
@@ -176,12 +172,16 @@ export const useEcho = (params: UseEchoParams) => {
     if (dependencies.length > 0) {
         // Create a watch effect for each dependency
         dependencies.forEach((dep, index) => {
-            watch(() => dependencies[index], () => {
-                // Clean up old subscription
-                cleanup();
-                // Setup new subscription
-                setupSubscription();
-            }, { deep: true });
+            watch(
+                () => dependencies[index], 
+                () => {
+                    // Clean up old subscription
+                    cleanup();
+                    // Setup new subscription
+                    setupSubscription();
+                }, 
+                { deep: true }
+            );
         });
     }
 
@@ -190,6 +190,6 @@ export const useEcho = (params: UseEchoParams) => {
         echo: getEchoInstance(),
         leaveChannel: () => {
             cleanup();
-        }
+        },
     };
-}
+};

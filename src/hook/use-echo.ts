@@ -40,7 +40,9 @@ export const configureEcho = (config: EchoOptions<any>): void => {
 const getEchoInstance = (): EchoInstance | null => {
     if (!echoInstance) {
         if (!echoConfig) {
-            console.error('Echo has not been configured. Please call configureEcho() with your configuration options before using Echo.');
+            console.error(
+                'Echo has not been configured. Please call configureEcho() with your configuration options before using Echo.'
+            );
             return null;
         }
 
@@ -93,13 +95,7 @@ interface UseEchoParams {
 
 // The main hook for using Echo in React components
 export const useEcho = (params: UseEchoParams) => {
-    const {
-        channel,
-        event,
-        callback,
-        dependencies = [],
-        visibility = 'private'
-    } = params;
+    const { channel, event, callback, dependencies = [], visibility = 'private' } = params;
 
     const eventRef = useRef(callback);
 
@@ -164,6 +160,6 @@ export const useEcho = (params: UseEchoParams) => {
                     delete channels[channelName];
                 }
             }
-        }
+        },
     };
 };
