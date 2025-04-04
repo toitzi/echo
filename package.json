@@ -75,7 +75,8 @@
             "types": "./dist/echo.d.ts"
         },
         "./iife": "./dist/echo.iife.js",
-        "./react": "./src/react.ts"
+        "./react": "./src/react.ts",
+        "./vue": "./src/vue.ts"
     },
     "overrides": {
         "glob": "^9.0.0"
