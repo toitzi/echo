@@ -173,13 +173,13 @@ export const useEcho = (params: UseEchoParams) => {
         // Create a watch effect for each dependency
         dependencies.forEach((dep, index) => {
             watch(
-                () => dependencies[index], 
+                () => dependencies[index],
                 () => {
                     // Clean up old subscription
                     cleanup();
                     // Setup new subscription
                     setupSubscription();
-                }, 
+                },
                 { deep: true }
             );
         });
