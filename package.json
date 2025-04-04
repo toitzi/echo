@@ -74,7 +74,8 @@
             "require": "./dist/echo.common.js",
             "types": "./dist/echo.d.ts"
         },
-        "./iife": "./dist/echo.iife.js"
+        "./iife": "./dist/echo.iife.js",
+        "./react": "./src/react.ts"
     },
     "overrides": {
         "glob": "^9.0.0"
