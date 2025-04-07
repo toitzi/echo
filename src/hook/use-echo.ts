@@ -1,34 +1,17 @@
-import { useEffect, useRef } from 'react';
-import Echo, { type EchoOptions } from '../echo';
-import Pusher from 'pusher-js';
+import Pusher from "pusher-js";
+import { useEffect, useRef } from "react";
+import Echo, { type Broadcaster, type EchoOptions } from "../echo";
 
-// Define types for Echo channels
-interface Channel {
-    listen(event: string, callback: (payload: any) => void): Channel;
-    stopListening(event: string, callback?: (payload: any) => void): Channel;
-}
-
-interface EchoInstance extends Echo<any> {
-    channel(channel: string): Channel;
-    private(channel: string): Channel;
-    leaveChannel(channel: string): void;
-}
-
-interface ChannelData {
-    count: number;
-    channel: Channel;
-}
-
-interface Channels {
-    [channelName: string]: ChannelData;
-}
+type AvailableBroadcasters = keyof Broadcaster;
 
 // Create a singleton Echo instance
-let echoInstance: EchoInstance | null = null;
-let echoConfig: EchoOptions<any> | null = null;
+let echoInstance: Echo<AvailableBroadcasters> | null = null;
+let echoConfig: EchoOptions<AvailableBroadcasters> | null = null;
 
 // Configure Echo with custom options
-export const configureEcho = (config: EchoOptions<any>): void => {
+export const configureEcho = <T extends AvailableBroadcasters>(
+    config: EchoOptions<T>
+): void => {
     echoConfig = config;
     // Reset the instance if it was already created
     if (echoInstance) {
@@ -37,65 +20,86 @@ export const configureEcho = (config: EchoOptions<any>): void => {
 };
 
 // Initialize Echo only once
-const getEchoInstance = (): EchoInstance | null => {
-    if (!echoInstance) {
-        if (!echoConfig) {
-            console.error(
-                'Echo has not been configured. Please call configureEcho() with your configuration options before using Echo.'
-            );
-            return null;
-        }
-
-        // Temporarily add Pusher to window object for Echo initialization
-        // This is a compromise - we're still avoiding permanent global namespace pollution
-        // by only adding it temporarily during initialization
-        const originalPusher = (window as any).Pusher;
-        (window as any).Pusher = Pusher;
-
-        // Configure Echo with provided config
-        echoInstance = new Echo(echoConfig) as EchoInstance;
-
-        // Restore the original Pusher value to avoid side effects
-        if (originalPusher) {
-            (window as any).Pusher = originalPusher;
-        } else {
-            delete (window as any).Pusher;
-        }
+const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
+    if (echoInstance) {
+        return echoInstance as Echo<T>;
     }
-    return echoInstance;
+
+    if (!echoConfig) {
+        throw new Error(
+            "Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo."
+        );
+    }
+
+    echoConfig.Pusher ??= Pusher;
+
+    // Configure Echo with provided config
+    echoInstance = new Echo(echoConfig);
+
+    return echoInstance as Echo<T>;
+};
+
+type Channel<T extends AvailableBroadcasters> =
+    | Broadcaster[T]["public"]
+    | Broadcaster[T]["private"];
+
+type ChannelData<T extends AvailableBroadcasters> = {
+    count: number;
+    channel: Channel<T>;
 };
 
 // Keep track of all active channels
-const channels: Channels = {};
+const channels: Record<string, ChannelData<AvailableBroadcasters>> = {};
 
 // Export Echo instance for direct access if needed
-export const echo = (): EchoInstance | null => getEchoInstance();
+export const echo = <T extends AvailableBroadcasters>(): Echo<T> =>
+    getEchoInstance<T>();
 
 // Helper functions to interact with Echo
-export const subscribeToChannel = (channelName: string, isPrivate = false): Channel | null => {
-    const instance = getEchoInstance();
-    if (!instance) return null;
-    return isPrivate ? instance.private(channelName) : instance.channel(channelName);
+export const subscribeToChannel = <T extends AvailableBroadcasters>(
+    channelName: string,
+    isPrivate = false
+): Channel<T> => {
+    const instance = getEchoInstance<T>();
+
+    return isPrivate
+        ? instance.private(channelName)
+        : instance.channel(channelName);
 };
 
 export const leaveChannel = (channelName: string): void => {
-    const instance = getEchoInstance();
-    if (!instance) return;
-    instance.leaveChannel(channelName);
+    getEchoInstance().leaveChannel(channelName);
 };
 
 // Define the interface for useEcho hook parameters
-interface UseEchoParams {
+interface UseEchoParams<T> {
     channel: string;
     event: string | string[];
-    callback: (payload: any) => void;
+    callback: (payload: T) => void;
     dependencies?: any[];
-    visibility?: 'private' | 'public';
+    visibility?: "private" | "public";
 }
 
+useEcho<{
+    id: number;
+    name: string;
+    email: string;
+    created_at: string;
+    updated_at: string;
+}>({
+    channel: "",
+    callback: (payload) => {},
+});
+
 // The main hook for using Echo in React components
-export const useEcho = (params: UseEchoParams) => {
-    const { channel, event, callback, dependencies = [], visibility = 'private' } = params;
+export const useEcho = <T>(params: UseEchoParams<T>) => {
+    const {
+        channel,
+        event,
+        callback,
+        dependencies = [],
+        visibility = "private",
+    } = params;
 
     const eventRef = useRef(callback);
 
@@ -103,8 +107,8 @@ export const useEcho = (params: UseEchoParams) => {
         // Always use the latest callback
         eventRef.current = callback;
 
-        const channelName = visibility === 'public' ? channel : `${visibility}-${channel}`;
-        const isPrivate = visibility === 'private';
+        const isPrivate = visibility === "private";
+        const channelName = isPrivate ? `${visibility}-${channel}` : channel;
 
         // Reuse existing channel subscription or create a new one
         if (!channels[channelName]) {
@@ -121,7 +125,7 @@ export const useEcho = (params: UseEchoParams) => {
 
         const subscription = channels[channelName].channel;
 
-        const listener = (payload: any) => {
+        const listener = (payload: T) => {
             eventRef.current(payload);
         };
 
@@ -148,11 +152,10 @@ export const useEcho = (params: UseEchoParams) => {
         };
     }, [...dependencies]); // eslint-disable-line
 
-    // Return the Echo instance for additional control if needed
     return {
-        echo: getEchoInstance(),
         leaveChannel: () => {
-            const channelName = visibility === 'public' ? channel : `${visibility}-${channel}`;
+            const channelName =
+                visibility === "public" ? channel : `${visibility}-${channel}`;
             if (channels[channelName]) {
                 channels[channelName].count -= 1;
                 if (channels[channelName].count === 0) {
