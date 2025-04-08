@@ -1,2 +1,2 @@
 // Export all Vue-specific functionality
-export { configureEcho, echo, subscribeToChannel, leaveChannel, useEcho } from './composable/useEcho';
+export { configureEcho, echo, useEcho } from './composable/useEcho';

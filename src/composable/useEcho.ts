@@ -1,34 +1,71 @@
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import Echo, { type EchoOptions } from '../echo';
 import Pusher from 'pusher-js';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import Echo, { type Broadcaster, type EchoOptions } from "../echo";
 
-// Define types for Echo channels
-interface Channel {
-    listen(event: string, callback: (payload: any) => void): Channel;
-    stopListening(event: string, callback?: (payload: any) => void): Channel;
-}
+// Type definitions
+type AvailableBroadcasters = keyof Broadcaster;
 
-interface EchoInstance extends Echo<any> {
-    channel(channel: string): Channel;
-    private(channel: string): Channel;
-    leaveChannel(channel: string): void;
-}
+type Channel<T extends AvailableBroadcasters> =
+    | Broadcaster[T]["public"]
+    | Broadcaster[T]["private"];
 
-interface ChannelData {
+type ChannelData<T extends AvailableBroadcasters> = {
     count: number;
-    channel: Channel;
+    channel: Channel<T>;
+};
+
+interface UseEchoParams<T> {
+    channel: string;
+    event: string | string[];
+    callback: (payload: T) => void;
+    dependencies?: any[];
+    visibility?: "private" | "public";
 }
 
-interface Channels {
-    [channelName: string]: ChannelData;
-}
+// Singleton instance management
+let echoInstance: Echo<AvailableBroadcasters> | null = null;
+let echoConfig: EchoOptions<AvailableBroadcasters> | null = null;
+const channels: Record<string, ChannelData<AvailableBroadcasters>> = {};
 
-// Create a singleton Echo instance
-let echoInstance: EchoInstance | null = null;
-let echoConfig: EchoOptions<any> | null = null;
+// Helper functions
+const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
+    if (echoInstance) {
+        return echoInstance as Echo<T>;
+    }
 
-// Configure Echo with custom options
-export const configureEcho = (config: EchoOptions<any>): void => {
+    if (!echoConfig) {
+        throw new Error(
+            "Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo."
+        );
+    }
+
+    echoConfig.Pusher ??= Pusher;
+
+    // Configure Echo with provided config
+    echoInstance = new Echo(echoConfig);
+
+    return echoInstance as Echo<T>;
+};
+
+const subscribeToChannel = <T extends AvailableBroadcasters>(
+    channelName: string,
+    isPrivate = false
+): Channel<T> => {
+    const instance = getEchoInstance<T>();
+
+    return isPrivate
+        ? instance.private(channelName)
+        : instance.channel(channelName);
+};
+
+const leaveChannel = (channelName: string): void => {
+    getEchoInstance().leaveChannel(channelName);
+};
+
+// Exported functions
+export const configureEcho = <T extends AvailableBroadcasters>(
+    config: EchoOptions<T>
+): void => {
     echoConfig = config;
     // Reset the instance if it was already created
     if (echoInstance) {
@@ -36,104 +73,54 @@ export const configureEcho = (config: EchoOptions<any>): void => {
     }
 };
 
-// Initialize Echo only once
-const getEchoInstance = (): EchoInstance | null => {
-    if (!echoInstance) {
-        if (!echoConfig) {
-            console.error(
-                'Echo has not been configured. Please call configureEcho() with your configuration options before using Echo.'
-            );
-            return null;
-        }
-
-        // Temporarily add Pusher to window object for Echo initialization
-        // This is a compromise - we're still avoiding permanent global namespace pollution
-        // by only adding it temporarily during initialization
-        const originalPusher = (window as any).Pusher;
-        (window as any).Pusher = Pusher;
-
-        // Configure Echo with provided config
-        echoInstance = new Echo(echoConfig) as EchoInstance;
-
-        // Restore the original Pusher value to avoid side effects
-        if (originalPusher) {
-            (window as any).Pusher = originalPusher;
-        } else {
-            delete (window as any).Pusher;
-        }
-    }
-    return echoInstance;
-};
-
-// Keep track of all active channels
-const channels: Channels = {};
-
-// Export Echo instance for direct access if needed
-export const echo = (): EchoInstance | null => getEchoInstance();
-
-// Helper functions to interact with Echo
-export const subscribeToChannel = (channelName: string, isPrivate = false): Channel | null => {
-    const instance = getEchoInstance();
-    if (!instance) return null;
-    return isPrivate ? instance.private(channelName) : instance.channel(channelName);
-};
-
-export const leaveChannel = (channelName: string): void => {
-    const instance = getEchoInstance();
-    if (!instance) return;
-    instance.leaveChannel(channelName);
-};
-
-// Define the interface for useEcho composable parameters
-interface UseEchoParams {
-    channel: string;
-    event: string | string[];
-    callback: (payload: any) => void;
-    dependencies?: any[];
-    visibility?: 'private' | 'public';
-}
+export const echo = <T extends AvailableBroadcasters>(): Echo<T> =>
+    getEchoInstance<T>();
 
 // The main composable for using Echo in Vue components
-export const useEcho = (params: UseEchoParams) => {
-    const { channel: channelName, event, callback, dependencies = [], visibility = 'private' } = params;
-    // Use ref to store the current callback
+export const useEcho = <T>(params: UseEchoParams<T>) => {
+    const {
+        channel,
+        event,
+        callback,
+        dependencies = [],
+        visibility = "private",
+    } = params;
+
+    // Use Vue ref to store the callback
     const eventCallback = ref(callback);
+    
+    // Update the callback ref when the callback changes
+    watch(() => callback, (newCallback) => {
+        eventCallback.value = newCallback;
+    });
 
-    // Track subscription for cleanup
-    let subscription: Channel | null = null;
-    let events: string[] = [];
-    let fullChannelName = '';
+    let subscription: Channel<AvailableBroadcasters> | null = null;
+    let channelName = '';
+    const events = Array.isArray(event) ? event : [event];
 
-    // Setup function to handle subscription
+    // Setup function to subscribe to channel
     const setupSubscription = () => {
-        // Update callback ref
-        eventCallback.value = callback;
-
-        // Format channel name based on visibility
-        fullChannelName = visibility === 'public' ? channelName : `${visibility}-${channelName}`;
-        const isPrivate = visibility === 'private';
+        const isPrivate = visibility === "private";
+        channelName = isPrivate ? `${visibility}-${channel}` : channel;
 
         // Reuse existing channel subscription or create a new one
-        if (!channels[fullChannelName]) {
-            const channel = subscribeToChannel(channelName, isPrivate);
-            if (!channel) return;
-            channels[fullChannelName] = {
+        if (!channels[channelName]) {
+            const channelSubscription = subscribeToChannel(channel, isPrivate);
+            if (!channelSubscription) return;
+
+            channels[channelName] = {
                 count: 1,
-                channel,
+                channel: channelSubscription,
             };
         } else {
-            channels[fullChannelName].count += 1;
+            channels[channelName].count += 1;
         }
 
-        subscription = channels[fullChannelName].channel;
+        subscription = channels[channelName].channel;
 
-        // Create listener function
-        const listener = (payload: any) => {
+        const listener = (payload: T) => {
             eventCallback.value(payload);
         };
-
-        // Convert event to array if it's a single string
-        events = Array.isArray(event) ? event : [event];
 
         // Subscribe to all events
         events.forEach((e) => {
@@ -141,55 +128,56 @@ export const useEcho = (params: UseEchoParams) => {
         });
     };
 
-    // Cleanup function
-    const cleanup = () => {
-        if (subscription && events.length > 0) {
-            events.forEach((e) => {
-                subscription?.stopListening(e);
-            });
+    // Cleanup function to unsubscribe from channel
+    const cleanupSubscription = () => {
+        if (!subscription) return;
 
-            if (fullChannelName && channels[fullChannelName]) {
-                channels[fullChannelName].count -= 1;
-                if (channels[fullChannelName].count === 0) {
-                    leaveChannel(fullChannelName);
-                    delete channels[fullChannelName];
-                }
+        events.forEach((e) => {
+            subscription?.stopListening(e);
+        });
+
+        if (channelName && channels[channelName]) {
+            channels[channelName].count -= 1;
+            if (channels[channelName].count === 0) {
+                leaveChannel(channelName);
+                delete channels[channelName];
             }
         }
     };
 
-    // Setup subscription when component is mounted
+    // Setup on component mount
     onMounted(() => {
         setupSubscription();
     });
 
-    // Clean up subscription when component is unmounted
+    // Cleanup on component unmount
     onUnmounted(() => {
-        cleanup();
+        cleanupSubscription();
     });
 
-    // Watch dependencies and re-subscribe when they change
+    // Watch dependencies for changes
     if (dependencies.length > 0) {
-        // Create a watch effect for each dependency
-        dependencies.forEach((dep, index) => {
-            watch(
-                () => dependencies[index],
-                () => {
-                    // Clean up old subscription
-                    cleanup();
-                    // Setup new subscription
-                    setupSubscription();
-                },
-                { deep: true }
-            );
-        });
+        // Create a function that returns the dependencies array
+        const getDependencies = () => dependencies;
+        
+        watch(getDependencies, () => {
+            cleanupSubscription();
+            setupSubscription();
+        }, { deep: true });
     }
 
-    // Return the Echo instance for additional control if needed
+    // Return methods that can be used by the component
     return {
-        echo: getEchoInstance(),
         leaveChannel: () => {
-            cleanup();
+            const channelName =
+                visibility === "public" ? channel : `${visibility}-${channel}`;
+            if (channels[channelName]) {
+                channels[channelName].count -= 1;
+                if (channels[channelName].count === 0) {
+                    leaveChannel(channelName);
+                    delete channels[channelName];
+                }
+            }
         },
     };
 };
