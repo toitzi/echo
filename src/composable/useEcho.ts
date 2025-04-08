@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import Echo, { type Broadcaster, type EchoOptions } from '../echo';
 
 // Type definitions
-type AvailableBroadcasters = keyof Broadcaster;
+type AvailableBroadcasters = Exclude<keyof Broadcaster, 'function'>;
 
 type Channel<T extends AvailableBroadcasters> = Broadcaster[T]['public'] | Broadcaster[T]['private'];
 

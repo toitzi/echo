@@ -47,4 +47,44 @@ export default [
         ],
         external: ['jquery', 'axios', 'vue', '@hotwired/turbo', 'tslib'], // Compatible packages not included in the bundle
     },
+    // React build configuration
+    {
+        input: './src/react.ts',
+        output: [
+            { file: './dist/react.js', format: 'esm' },
+            { file: './dist/react.common.js', format: 'cjs' },
+        ],
+        plugins: [
+            resolve(),
+            typescript({
+                tsconfig: './tsconfig.json',
+            }),
+            babel({
+                babelHelpers: 'bundled',
+                extensions: ['.ts'],
+                exclude: 'node_modules/**',
+            }),
+        ],
+        external: ['react', 'pusher-js'], // React and pusher-js should be external dependencies
+    },
+    // Vue build configuration
+    {
+        input: './src/vue.ts',
+        output: [
+            { file: './dist/vue.js', format: 'esm' },
+            { file: './dist/vue.common.js', format: 'cjs' },
+        ],
+        plugins: [
+            resolve(),
+            typescript({
+                tsconfig: './tsconfig.json',
+            }),
+            babel({
+                babelHelpers: 'bundled',
+                extensions: ['.ts'],
+                exclude: 'node_modules/**',
+            }),
+        ],
+        external: ['vue', 'pusher-js'], // Vue and pusher-js should be external dependencies
+    },
 ];

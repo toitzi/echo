@@ -79,8 +79,16 @@
             "types": "./dist/echo.d.ts"
         },
         "./iife": "./dist/echo.iife.js",
-        "./react": "./src/react.ts",
-        "./vue": "./src/vue.ts"
+        "./react": {
+            "import": "./dist/react.js",
+            "require": "./dist/react.common.js",
+            "types": "./dist/react.d.ts"
+        },
+        "./vue": {
+            "import": "./dist/vue.js",
+            "require": "./dist/vue.common.js",
+            "types": "./dist/vue.d.ts"
+        }
     },
     "overrides": {
         "glob": "^9.0.0"
