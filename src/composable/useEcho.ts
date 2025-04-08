@@ -72,7 +72,7 @@ export const useEcho = <T>(params: UseEchoParams<T>) => {
 
     // Use Vue ref to store the callback
     const eventCallback = ref(callback);
-    
+
     // Update the callback ref when the callback changes
     watch(
         () => callback,
@@ -87,7 +87,7 @@ export const useEcho = <T>(params: UseEchoParams<T>) => {
 
     // Setup function to subscribe to channel
     const setupSubscription = () => {
-        const isPrivate = visibility === "private";
+        const isPrivate = visibility === 'private';
         channelName = isPrivate ? `${visibility}-${channel}` : channel;
 
         // Reuse existing channel subscription or create a new one
@@ -146,7 +146,7 @@ export const useEcho = <T>(params: UseEchoParams<T>) => {
     if (dependencies.length > 0) {
         // Create a function that returns the dependencies array
         const getDependencies = () => dependencies;
-        
+
         watch(
             getDependencies,
             () => {
