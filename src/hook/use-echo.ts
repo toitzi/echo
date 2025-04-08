@@ -1,13 +1,11 @@
-import Pusher from "pusher-js";
-import { useEffect, useRef } from "react";
-import Echo, { type Broadcaster, type EchoOptions } from "../echo";
+import Pusher from 'pusher-js';
+import { useEffect, useRef } from 'react';
+import Echo, { type Broadcaster, type EchoOptions } from '../echo';
 
 // Type definitions
 type AvailableBroadcasters = keyof Broadcaster;
 
-type Channel<T extends AvailableBroadcasters> =
-    | Broadcaster[T]["public"]
-    | Broadcaster[T]["private"];
+type Channel<T extends AvailableBroadcasters> = Broadcaster[T]['public'] | Broadcaster[T]['private'];
 
 type ChannelData<T extends AvailableBroadcasters> = {
     count: number;
@@ -19,7 +17,7 @@ interface UseEchoParams<T> {
     event: string | string[];
     callback: (payload: T) => void;
     dependencies?: any[];
-    visibility?: "private" | "public";
+    visibility?: 'private' | 'public';
 }
 
 // Singleton instance management
@@ -35,7 +33,7 @@ const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
 
     if (!echoConfig) {
         throw new Error(
-            "Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo."
+            'Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo.'
         );
     }
 
@@ -47,15 +45,10 @@ const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
     return echoInstance as Echo<T>;
 };
 
-const subscribeToChannel = <T extends AvailableBroadcasters>(
-    channelName: string,
-    isPrivate = false
-): Channel<T> => {
+const subscribeToChannel = <T extends AvailableBroadcasters>(channelName: string, isPrivate = false): Channel<T> => {
     const instance = getEchoInstance<T>();
 
-    return isPrivate
-        ? instance.private(channelName)
-        : instance.channel(channelName);
+    return isPrivate ? instance.private(channelName) : instance.channel(channelName);
 };
 
 const leaveChannel = (channelName: string): void => {
@@ -63,9 +56,7 @@ const leaveChannel = (channelName: string): void => {
 };
 
 // Export Echo configuration and instance management
-export const configureEcho = <T extends AvailableBroadcasters>(
-    config: EchoOptions<T>
-): void => {
+export const configureEcho = <T extends AvailableBroadcasters>(config: EchoOptions<T>): void => {
     echoConfig = config;
     // Reset the instance if it was already created
     if (echoInstance) {
@@ -73,18 +64,11 @@ export const configureEcho = <T extends AvailableBroadcasters>(
     }
 };
 
-export const echo = <T extends AvailableBroadcasters>(): Echo<T> =>
-    getEchoInstance<T>();
+export const echo = <T extends AvailableBroadcasters>(): Echo<T> => getEchoInstance<T>();
 
 // The main hook for using Echo in React components
 export const useEcho = <T>(params: UseEchoParams<T>) => {
-    const {
-        channel,
-        event,
-        callback,
-        dependencies = [],
-        visibility = "private",
-    } = params;
+    const { channel, event, callback, dependencies = [], visibility = 'private' } = params;
 
     const eventRef = useRef(callback);
 
@@ -92,7 +76,7 @@ export const useEcho = <T>(params: UseEchoParams<T>) => {
         // Always use the latest callback
         eventRef.current = callback;
 
-        const isPrivate = visibility === "private";
+        const isPrivate = visibility === 'private';
         const channelName = isPrivate ? `${visibility}-${channel}` : channel;
 
         // Reuse existing channel subscription or create a new one
@@ -139,8 +123,7 @@ export const useEcho = <T>(params: UseEchoParams<T>) => {
 
     return {
         leaveChannel: () => {
-            const channelName =
-                visibility === "public" ? channel : `${visibility}-${channel}`;
+            const channelName = visibility === 'public' ? channel : `${visibility}-${channel}`;
             if (channels[channelName]) {
                 channels[channelName].count -= 1;
                 if (channels[channelName].count === 0) {
