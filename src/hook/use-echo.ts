@@ -1,13 +1,13 @@
-import Pusher from "pusher-js";
-import { useEffect, useRef } from "react";
-import Echo, { type Broadcaster, type EchoOptions } from "../echo";
+import Pusher from 'pusher-js';
+import { useEffect, useRef } from 'react';
+import Echo, { type Broadcaster, type EchoOptions } from '../echo';
 
 // Type definitions
 type AvailableBroadcasters = keyof Broadcaster;
 
 type Channel<T extends AvailableBroadcasters> =
-    | Broadcaster[T]["public"]
-    | Broadcaster[T]["private"];
+    | Broadcaster[T]['public']
+    | Broadcaster[T]['private'];
 
 type ChannelData<T extends AvailableBroadcasters> = {
     count: number;
@@ -19,7 +19,7 @@ interface UseEchoParams<T> {
     event: string | string[];
     callback: (payload: T) => void;
     dependencies?: any[];
-    visibility?: "private" | "public";
+    visibility?: 'private' | 'public';
 }
 
 // Singleton instance management
@@ -35,7 +35,7 @@ const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
 
     if (!echoConfig) {
         throw new Error(
-            "Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo."
+            'Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo.'
         );
     }
 
@@ -50,7 +50,7 @@ const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
 const subscribeToChannel = <T extends AvailableBroadcasters>(
     channelName: string,
     isPrivate = false
-): Broadcaster[T]["private"] | Broadcaster[T]["public"] => {
+): Broadcaster[T]['private'] | Broadcaster[T]['public'] => {
     const instance = getEchoInstance<T>();
 
     return isPrivate
@@ -83,12 +83,12 @@ export const useEcho = <T>(params: UseEchoParams<T>) => {
         event,
         callback,
         dependencies = [],
-        visibility = "private",
+        visibility = 'private',
     } = params;
 
     const eventRef = useRef(callback);
 
-    const isPrivate = visibility === "private";
+    const isPrivate = visibility === 'private';
     const channelName = isPrivate ? `${visibility}-${channel}` : channel;
 
     useEffect(() => {
