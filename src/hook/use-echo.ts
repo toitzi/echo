@@ -5,9 +5,7 @@ import Echo, { type Broadcaster, type EchoOptions } from '../echo';
 // Type definitions
 type AvailableBroadcasters = keyof Broadcaster;
 
-type Channel<T extends AvailableBroadcasters> =
-    | Broadcaster[T]['public']
-    | Broadcaster[T]['private'];
+type Channel<T extends AvailableBroadcasters> = Broadcaster[T]['public'] | Broadcaster[T]['private'];
 
 type ChannelData<T extends AvailableBroadcasters> = {
     count: number;
@@ -53,9 +51,7 @@ const subscribeToChannel = <T extends AvailableBroadcasters>(
 ): Broadcaster[T]['private'] | Broadcaster[T]['public'] => {
     const instance = getEchoInstance<T>();
 
-    return isPrivate
-        ? instance.private(channelName)
-        : instance.channel(channelName);
+    return isPrivate ? instance.private(channelName) : instance.channel(channelName);
 };
 
 const leaveChannel = (channelName: string): void => {
@@ -63,9 +59,7 @@ const leaveChannel = (channelName: string): void => {
 };
 
 // Export Echo configuration and instance management
-export const configureEcho = <T extends AvailableBroadcasters>(
-    config: EchoOptions<T>
-): void => {
+export const configureEcho = <T extends AvailableBroadcasters>(config: EchoOptions<T>): void => {
     echoConfig = config;
     // Reset the instance if it was already created
     if (echoInstance) {
@@ -73,18 +67,11 @@ export const configureEcho = <T extends AvailableBroadcasters>(
     }
 };
 
-export const echo = <T extends AvailableBroadcasters>(): Echo<T> =>
-    getEchoInstance<T>();
+export const echo = <T extends AvailableBroadcasters>(): Echo<T> => getEchoInstance<T>();
 
 // The main hook for using Echo in React components
 export const useEcho = <T>(params: UseEchoParams<T>) => {
-    const {
-        channel,
-        event,
-        callback,
-        dependencies = [],
-        visibility = 'private',
-    } = params;
+    const { channel, event, callback, dependencies = [], visibility = 'private' } = params;
 
     const eventRef = useRef(callback);
 
