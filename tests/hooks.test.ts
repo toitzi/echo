@@ -13,9 +13,7 @@ describe('Echo Configuration', () => {
 
     test('it throws error when Echo is not configured', () => {
         const { echo } = getEchoModule();
-        expect(() => echo()).toThrow(
-            'Echo has not been configured'
-        );
+        expect(() => echo()).toThrow('Echo has not been configured');
     });
 
     test('it creates Echo instance with proper configuration', () => {
