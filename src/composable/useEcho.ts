@@ -25,36 +25,6 @@ let echoInstance: Echo<AvailableBroadcasters> | null = null;
 let echoConfig: EchoOptions<AvailableBroadcasters> | null = null;
 const channels: Record<string, ChannelData<AvailableBroadcasters>> = {};
 
-// Helper functions
-const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
-    if (echoInstance) {
-        return echoInstance as Echo<T>;
-    }
-
-    if (!echoConfig) {
-        throw new Error(
-            'Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo.'
-        );
-    }
-
-    echoConfig.Pusher ??= Pusher;
-
-    // Configure Echo with provided config
-    echoInstance = new Echo(echoConfig);
-
-    return echoInstance as Echo<T>;
-};
-
-const subscribeToChannel = <T extends AvailableBroadcasters>(channelName: string, isPrivate = false): Channel<T> => {
-    const instance = getEchoInstance<T>();
-
-    return isPrivate ? instance.private(channelName) : instance.channel(channelName);
-};
-
-const leaveChannel = (channelName: string): void => {
-    getEchoInstance().leaveChannel(channelName);
-};
-
 // Exported functions
 export const configureEcho = <T extends AvailableBroadcasters>(config: EchoOptions<T>): void => {
     echoConfig = config;
@@ -170,4 +140,34 @@ export const useEcho = <T>(params: UseEchoParams<T>) => {
             }
         },
     };
+};
+
+// Helper functions
+const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
+    if (echoInstance) {
+        return echoInstance as Echo<T>;
+    }
+
+    if (!echoConfig) {
+        throw new Error(
+            'Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo.'
+        );
+    }
+
+    echoConfig.Pusher ??= Pusher;
+
+    // Configure Echo with provided config
+    echoInstance = new Echo(echoConfig);
+
+    return echoInstance as Echo<T>;
+};
+
+const subscribeToChannel = <T extends AvailableBroadcasters>(channelName: string, isPrivate = false): Channel<T> => {
+    const instance = getEchoInstance<T>();
+
+    return isPrivate ? instance.private(channelName) : instance.channel(channelName);
+};
+
+const leaveChannel = (channelName: string): void => {
+    getEchoInstance().leaveChannel(channelName);
 };
