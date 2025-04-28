@@ -3,10 +3,7 @@ import tsPlugin from "@typescript-eslint/eslint-plugin";
 
 const config = [
     {
-        files: [
-            "typings/**/*.ts",
-            "src/**/*.ts"
-        ],
+        files: ["typings/**/*.ts", "src/**/*.ts"],
         languageOptions: {
             parser: tsParser, // Use the imported parser object
             parserOptions: {
@@ -31,7 +28,10 @@ const config = [
             "@typescript-eslint/no-unsafe-function-type": "off",
             "@typescript-eslint/no-unsafe-member-access": "warn",
             "@typescript-eslint/no-unsafe-return": "warn",
-            "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+            "@typescript-eslint/no-unused-vars": [
+                "warn",
+                { argsIgnorePattern: "^_" },
+            ],
             "no-console": "warn",
             "prefer-const": "off",
         },

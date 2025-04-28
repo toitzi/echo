@@ -1,5 +1,5 @@
-import type { EchoOptionsWithDefaults } from '../connector';
-import type { BroadcastDriver } from '../echo';
+import type { EchoOptionsWithDefaults } from "../connector";
+import type { BroadcastDriver } from "../echo";
 
 /**
  * This class represents a basic channel.
@@ -19,14 +19,17 @@ export abstract class Channel {
      * Listen for a whisper event on the channel instance.
      */
     listenForWhisper(event: string, callback: CallableFunction): this {
-        return this.listen('.client-' + event, callback);
+        return this.listen(".client-" + event, callback);
     }
 
     /**
      * Listen for an event on the channel instance.
      */
     notification(callback: CallableFunction): this {
-        return this.listen('.Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', callback);
+        return this.listen(
+            ".Illuminate\\Notifications\\Events\\BroadcastNotificationCreated",
+            callback,
+        );
     }
 
     /**
@@ -38,7 +41,7 @@ export abstract class Channel {
      * Stop listening for a whisper event on the channel instance.
      */
     stopListeningForWhisper(event: string, callback?: CallableFunction): this {
-        return this.stopListening('.client-' + event, callback);
+        return this.stopListening(".client-" + event, callback);
     }
 
     /**

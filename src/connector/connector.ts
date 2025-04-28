@@ -1,5 +1,5 @@
-import type { Channel, PresenceChannel } from '../channel';
-import type { BroadcastDriver, EchoOptions } from '../echo';
+import type { Channel, PresenceChannel } from "../channel";
+import type { BroadcastDriver, EchoOptions } from "../echo";
 
 export type EchoOptionsWithDefaults<TBroadcaster extends BroadcastDriver> = {
     broadcaster: TBroadcaster;
@@ -24,7 +24,7 @@ export abstract class Connector<
     TBroadcastDriver extends BroadcastDriver,
     TPublic extends Channel,
     TPrivate extends Channel,
-    TPresence extends PresenceChannel
+    TPresence extends PresenceChannel,
 > {
     /**
      * Default connector options.
@@ -33,16 +33,16 @@ export abstract class Connector<
         auth: {
             headers: {},
         },
-        authEndpoint: '/broadcasting/auth',
+        authEndpoint: "/broadcasting/auth",
         userAuthentication: {
-            endpoint: '/broadcasting/user-auth',
+            endpoint: "/broadcasting/user-auth",
             headers: {},
         },
         csrfToken: null,
         bearerToken: null,
         host: null,
         key: null,
-        namespace: 'App.Events',
+        namespace: "App.Events",
     } as const;
 
     /**
@@ -71,15 +71,16 @@ export abstract class Connector<
         let token = this.csrfToken();
 
         if (token) {
-            this.options.auth.headers['X-CSRF-TOKEN'] = token;
-            this.options.userAuthentication.headers['X-CSRF-TOKEN'] = token;
+            this.options.auth.headers["X-CSRF-TOKEN"] = token;
+            this.options.userAuthentication.headers["X-CSRF-TOKEN"] = token;
         }
 
         token = this.options.bearerToken;
 
         if (token) {
-            this.options.auth.headers['Authorization'] = 'Bearer ' + token;
-            this.options.userAuthentication.headers['Authorization'] = 'Bearer ' + token;
+            this.options.auth.headers["Authorization"] = "Bearer " + token;
+            this.options.userAuthentication.headers["Authorization"] =
+                "Bearer " + token;
         }
     }
 
@@ -89,7 +90,11 @@ export abstract class Connector<
     protected csrfToken(): null | string {
         let selector;
 
-        if (typeof window !== 'undefined' && typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
+        if (
+            typeof window !== "undefined" &&
+            typeof window.Laravel !== "undefined" &&
+            window.Laravel.csrfToken
+        ) {
             return window.Laravel.csrfToken;
         }
 
@@ -98,11 +103,11 @@ export abstract class Connector<
         }
 
         if (
-            typeof document !== 'undefined' &&
-            typeof document.querySelector === 'function' &&
+            typeof document !== "undefined" &&
+            typeof document.querySelector === "function" &&
             (selector = document.querySelector('meta[name="csrf-token"]'))
         ) {
-            return selector.getAttribute('content');
+            return selector.getAttribute("content");
         }
 
         return null;

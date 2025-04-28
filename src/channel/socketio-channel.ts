@@ -1,8 +1,8 @@
-import { EventFormatter } from '../util';
-import { Channel } from './channel';
-import type { Socket } from 'socket.io-client';
-import type { EchoOptionsWithDefaults } from '../connector';
-import type { BroadcastDriver } from '../echo';
+import { EventFormatter } from "../util";
+import { Channel } from "./channel";
+import type { Socket } from "socket.io-client";
+import type { EchoOptionsWithDefaults } from "../connector";
+import type { BroadcastDriver } from "../echo";
 
 /**
  * This class represents a Socket.io channel.
@@ -36,7 +36,11 @@ export class SocketIoChannel extends Channel {
     /**
      * Create a new class instance.
      */
-    constructor(socket: Socket, name: string, options: EchoOptionsWithDefaults<BroadcastDriver>) {
+    constructor(
+        socket: Socket,
+        name: string,
+        options: EchoOptionsWithDefaults<BroadcastDriver>,
+    ) {
         super();
 
         this.name = name;
@@ -51,7 +55,7 @@ export class SocketIoChannel extends Channel {
      * Subscribe to a Socket.io channel.
      */
     subscribe(): void {
-        this.socket.emit('subscribe', {
+        this.socket.emit("subscribe", {
             channel: this.name,
             auth: this.options.auth || {},
         });
@@ -63,7 +67,7 @@ export class SocketIoChannel extends Channel {
     unsubscribe(): void {
         this.unbind();
 
-        this.socket.emit('unsubscribe', {
+        this.socket.emit("unsubscribe", {
             channel: this.name,
             auth: this.options.auth || {},
         });
@@ -91,7 +95,7 @@ export class SocketIoChannel extends Channel {
      * Register a callback to be called anytime a subscription succeeds.
      */
     subscribed(callback: CallableFunction): this {
-        this.on('connect', (socket: Socket) => {
+        this.on("connect", (socket: Socket) => {
             callback(socket);
         });
 
@@ -142,7 +146,9 @@ export class SocketIoChannel extends Channel {
         this.listeners[event] = this.listeners[event] || [];
 
         if (callback) {
-            this.listeners[event] = this.listeners[event].filter((cb) => cb !== callback);
+            this.listeners[event] = this.listeners[event].filter(
+                (cb) => cb !== callback,
+            );
         }
 
         if (!callback || this.listeners[event].length === 0) {

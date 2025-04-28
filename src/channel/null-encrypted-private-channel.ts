@@ -1,4 +1,4 @@
-import { NullChannel } from './null-channel';
+import { NullChannel } from "./null-channel";
 
 /**
  * This class represents a null private channel.

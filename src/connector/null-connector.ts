@@ -1,10 +1,20 @@
-import { Connector } from './connector';
-import { NullChannel, NullPrivateChannel, NullPresenceChannel, NullEncryptedPrivateChannel } from '../channel';
+import { Connector } from "./connector";
+import {
+    NullChannel,
+    NullPrivateChannel,
+    NullPresenceChannel,
+    NullEncryptedPrivateChannel,
+} from "../channel";
 
 /**
  * This class creates a null connector.
  */
-export class NullConnector extends Connector<'null', NullChannel, NullPrivateChannel, NullPresenceChannel> {
+export class NullConnector extends Connector<
+    "null",
+    NullChannel,
+    NullPrivateChannel,
+    NullPresenceChannel
+> {
     /**
      * All of the subscribed channel names.
      */
@@ -20,7 +30,11 @@ export class NullConnector extends Connector<'null', NullChannel, NullPrivateCha
     /**
      * Listen for an event on a channel instance.
      */
-    listen(_name: string, _event: string, _callback: CallableFunction): NullChannel {
+    listen(
+        _name: string,
+        _event: string,
+        _callback: CallableFunction,
+    ): NullChannel {
         return new NullChannel();
     }
 
@@ -70,7 +84,7 @@ export class NullConnector extends Connector<'null', NullChannel, NullPrivateCha
      * Get the socket ID for the connection.
      */
     socketId(): string {
-        return 'fake-socket-id';
+        return "fake-socket-id";
     }
 
     /**

@@ -1,14 +1,14 @@
-import Pusher from 'pusher-js';
-import { useCallback, useEffect, useRef } from 'react';
+import Pusher from "pusher-js";
+import { useCallback, useEffect, useRef } from "react";
 import Echo, {
     type BroadcastDriver,
     type Broadcaster,
     type EchoOptions,
-} from '../echo';
+} from "../echo";
 
 type Connection<T extends BroadcastDriver> =
-    | Broadcaster[T]['public']
-    | Broadcaster[T]['private'];
+    | Broadcaster[T]["public"]
+    | Broadcaster[T]["private"];
 
 type ChannelData<T extends BroadcastDriver> = {
     count: number;
@@ -26,7 +26,7 @@ let echoConfig: EchoOptions<BroadcastDriver> | null = null;
 const channels: Record<string, ChannelData<BroadcastDriver>> = {};
 
 const subscribeToChannel = <T extends BroadcastDriver>(
-    channel: Channel
+    channel: Channel,
 ): Connection<T> => {
     const instance = getEchoInstance<T>();
 
@@ -49,7 +49,7 @@ const leaveChannel = (channel: Channel): void => {
 };
 
 export const configureEcho = <T extends BroadcastDriver>(
-    config: EchoOptions<T>
+    config: EchoOptions<T>,
 ): void => {
     echoConfig = config;
 
@@ -60,7 +60,7 @@ export const configureEcho = <T extends BroadcastDriver>(
 };
 
 const resolveChannelSubscription = <T extends BroadcastDriver>(
-    channel: Channel
+    channel: Channel,
 ): Connection<T> | void => {
     if (channels[channel.id]) {
         channels[channel.id].count += 1;
@@ -92,12 +92,12 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
     event: string | string[],
     callback: (payload: T) => void,
     dependencies: any[] = [],
-    visibility: 'private' | 'public' = 'private'
+    visibility: "private" | "public" = "private",
 ) => {
     const callbackFunc = useCallback(callback, dependencies);
     const subscription = useRef<Connection<K> | null>(null);
 
-    const isPrivate = visibility === 'private';
+    const isPrivate = visibility === "private";
     const events = Array.isArray(event) ? event : [event];
     const channel: Channel = {
         name: channelName,
@@ -141,7 +141,7 @@ const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
 
     if (!echoConfig) {
         throw new Error(
-            'Echo has not been configured. Please call `configureEcho()` before using Echo.'
+            "Echo has not been configured. Please call `configureEcho()` before using Echo.",
         );
     }
 

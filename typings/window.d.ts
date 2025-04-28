@@ -1,5 +1,5 @@
-import type { io } from 'socket.io-client';
-import type Pusher from 'pusher-js';
+import type { io } from "socket.io-client";
+import type Pusher from "pusher-js";
 
 export {};
 

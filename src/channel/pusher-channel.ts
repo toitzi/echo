@@ -1,14 +1,16 @@
-import { EventFormatter } from '../util';
-import { Channel } from './channel';
-import type Pusher from 'pusher-js';
-import type { Channel as BasePusherChannel } from 'pusher-js';
-import type { EchoOptionsWithDefaults } from '../connector';
-import type { BroadcastDriver } from '../echo';
+import { EventFormatter } from "../util";
+import { Channel } from "./channel";
+import type Pusher from "pusher-js";
+import type { Channel as BasePusherChannel } from "pusher-js";
+import type { EchoOptionsWithDefaults } from "../connector";
+import type { BroadcastDriver } from "../echo";
 
 /**
  * This class represents a Pusher channel.
  */
-export class PusherChannel<TBroadcastDriver extends BroadcastDriver> extends Channel {
+export class PusherChannel<
+    TBroadcastDriver extends BroadcastDriver,
+> extends Channel {
     /**
      * The Pusher client instance.
      */
@@ -32,7 +34,11 @@ export class PusherChannel<TBroadcastDriver extends BroadcastDriver> extends Cha
     /**
      * Create a new class instance.
      */
-    constructor(pusher: Pusher, name: string, options: EchoOptionsWithDefaults<TBroadcastDriver>) {
+    constructor(
+        pusher: Pusher,
+        name: string,
+        options: EchoOptionsWithDefaults<TBroadcastDriver>,
+    ) {
         super();
 
         this.name = name;
@@ -71,13 +77,18 @@ export class PusherChannel<TBroadcastDriver extends BroadcastDriver> extends Cha
      */
     listenToAll(callback: CallableFunction): this {
         this.subscription.bind_global((event: string, data: unknown) => {
-            if (event.startsWith('pusher:')) {
+            if (event.startsWith("pusher:")) {
                 return;
             }
 
-            let namespace = String(this.options.namespace ?? '').replace(/\./g, '\\');
+            let namespace = String(this.options.namespace ?? "").replace(
+                /\./g,
+                "\\",
+            );
 
-            let formattedEvent = event.startsWith(namespace) ? event.substring(namespace.length + 1) : '.' + event;
+            let formattedEvent = event.startsWith(namespace)
+                ? event.substring(namespace.length + 1)
+                : "." + event;
 
             callback(formattedEvent, data);
         });
@@ -90,7 +101,10 @@ export class PusherChannel<TBroadcastDriver extends BroadcastDriver> extends Cha
      */
     stopListening(event: string, callback?: CallableFunction): this {
         if (callback) {
-            this.subscription.unbind(this.eventFormatter.format(event), callback);
+            this.subscription.unbind(
+                this.eventFormatter.format(event),
+                callback,
+            );
         } else {
             this.subscription.unbind(this.eventFormatter.format(event));
         }
@@ -115,7 +129,7 @@ export class PusherChannel<TBroadcastDriver extends BroadcastDriver> extends Cha
      * Register a callback to be called anytime a subscription succeeds.
      */
     subscribed(callback: CallableFunction): this {
-        this.on('pusher:subscription_succeeded', () => {
+        this.on("pusher:subscription_succeeded", () => {
             callback();
         });
 
@@ -126,7 +140,7 @@ export class PusherChannel<TBroadcastDriver extends BroadcastDriver> extends Cha
      * Register a callback to be called anytime a subscription error occurs.
      */
     error(callback: CallableFunction): this {
-        this.on('pusher:subscription_error', (status: Record<string, any>) => {
+        this.on("pusher:subscription_error", (status: Record<string, any>) => {
             callback(status);
         });
 

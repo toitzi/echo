@@ -1,14 +1,14 @@
-import Pusher from 'pusher-js';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import Pusher from "pusher-js";
+import { onMounted, onUnmounted, ref, watch } from "vue";
 import Echo, {
     type BroadcastDriver,
     type Broadcaster,
     type EchoOptions,
-} from '../echo';
+} from "../echo";
 
 type Connection<T extends BroadcastDriver> =
-    | Broadcaster[T]['public']
-    | Broadcaster[T]['private'];
+    | Broadcaster[T]["public"]
+    | Broadcaster[T]["private"];
 
 type ChannelData<T extends BroadcastDriver> = {
     count: number;
@@ -32,7 +32,7 @@ const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
 
     if (!echoConfig) {
         throw new Error(
-            'Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo.'
+            "Echo has not been configured. Please call `configureEcho()` with your configuration options before using Echo.",
         );
     }
 
@@ -44,7 +44,7 @@ const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
 };
 
 const resolveChannelSubscription = <T extends BroadcastDriver>(
-    channel: Channel
+    channel: Channel,
 ): Connection<T> | null => {
     if (channels[channel.id]) {
         channels[channel.id].count += 1;
@@ -69,7 +69,7 @@ const resolveChannelSubscription = <T extends BroadcastDriver>(
 };
 
 const subscribeToChannel = <T extends BroadcastDriver>(
-    channel: Channel
+    channel: Channel,
 ): Connection<T> => {
     const instance = getEchoInstance<T>();
 
@@ -83,7 +83,7 @@ const leaveChannel = (channelName: string): void => {
 };
 
 export const configureEcho = <T extends BroadcastDriver>(
-    config: EchoOptions<T>
+    config: EchoOptions<T>,
 ): void => {
     echoConfig = config;
 
@@ -101,7 +101,7 @@ export const useEcho = <T>(
     event: string | string[],
     callback: (payload: T) => void,
     dependencies: any[] = [],
-    visibility: 'private' | 'public' = 'private'
+    visibility: "private" | "public" = "private",
 ) => {
     const eventCallback = ref(callback);
 
@@ -109,12 +109,12 @@ export const useEcho = <T>(
         () => callback,
         (newCallback) => {
             eventCallback.value = newCallback;
-        }
+        },
     );
 
     let subscription: Connection<BroadcastDriver> | null = null;
     const events = Array.isArray(event) ? event : [event];
-    const isPrivate = visibility === 'private';
+    const isPrivate = visibility === "private";
     const channel: Channel = {
         name: channelName,
         id: isPrivate ? `${visibility}-${channelName}` : channelName,
@@ -173,7 +173,7 @@ export const useEcho = <T>(
                 cleanupSubscription();
                 setupSubscription();
             },
-            { deep: true }
+            { deep: true },
         );
     }
 

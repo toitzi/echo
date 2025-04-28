@@ -13,13 +13,13 @@ export class EventFormatter {
      * Format the given event name.
      */
     format(event: string): string {
-        if (['.', '\\'].includes(event.charAt(0))) {
+        if ([".", "\\"].includes(event.charAt(0))) {
             return event.substring(1);
         } else if (this.namespace) {
-            event = this.namespace + '.' + event;
+            event = this.namespace + "." + event;
         }
 
-        return event.replace(/\./g, '\\');
+        return event.replace(/\./g, "\\");
     }
 
     /**
