@@ -27,7 +27,8 @@
         "lint": "eslint --config eslint.config.mjs",
         "prepublish": "npm run build",
         "release": "npm run test && standard-version && git push --follow-tags && npm publish",
-        "test": "jest"
+        "test": "jest",
+        "format": "prettier --write ."
     },
     "devDependencies": {
         "@babel/core": "^7.26.7",
@@ -48,6 +49,7 @@
         "@typescript-eslint/parser": "^8.21.0",
         "eslint": "^9.0.0",
         "jest": "^29.7.0",
+        "prettier": "^3.5.3",
         "pusher-js": "^8.0",
         "react": "^19.1.0",
         "rollup": "^3.0.0",
@@ -60,8 +62,8 @@
     },
     "peerDependencies": {
         "pusher-js": "*",
-        "socket.io-client": "*",
-        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+        "socket.io-client": "*"
     },
     "typesVersions": {
         "*": {
