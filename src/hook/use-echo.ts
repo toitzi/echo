@@ -141,7 +141,7 @@ const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
 
     if (!echoConfig) {
         throw new Error(
-            "Echo has not been configured. Please call `configureEcho()` before using Echo.",
+            "Echo has not been configured. Please call `configureEcho()`.",
         );
     }
 
