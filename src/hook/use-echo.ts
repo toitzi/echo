@@ -35,16 +35,16 @@ const subscribeToChannel = <T extends BroadcastDriver>(
         : instance.channel(channel.name);
 };
 
-const leaveChannel = (channelName: string): void => {
-    if (!channels[channelName]) {
+const leaveChannel = (channel: Channel): void => {
+    if (!channels[channel.id]) {
         return;
     }
 
-    channels[channelName].count -= 1;
+    channels[channel.id].count -= 1;
 
-    if (channels[channelName].count === 0) {
-        getEchoInstance().leaveChannel(channelName);
-        delete channels[channelName];
+    if (channels[channel.id].count === 0) {
+        getEchoInstance().leaveChannel(channel.id);
+        delete channels[channel.id];
     }
 };
 
@@ -110,7 +110,7 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
             subscription.current!.stopListening(e, callbackFunc);
         });
 
-        leaveChannel(channel.id);
+        leaveChannel(channel);
     }, dependencies);
 
     useEffect(() => {
