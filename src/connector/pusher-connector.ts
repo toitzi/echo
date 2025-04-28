@@ -1,19 +1,25 @@
-import { Connector, type EchoOptionsWithDefaults } from "./connector";
+import type Pusher from "pusher-js";
+import type { Options as PusherJsOptions } from "pusher-js";
 import {
     PusherChannel,
-    PusherPrivateChannel,
     PusherEncryptedPrivateChannel,
     PusherPresenceChannel,
+    PusherPrivateChannel,
 } from "../channel";
-import type Pusher from "pusher-js";
-import type { Options as PusherOptions } from "pusher-js";
 import type { BroadcastDriver } from "../echo";
+import { Connector, type EchoOptionsWithDefaults } from "./connector";
 
 type AnyPusherChannel =
     | PusherChannel<BroadcastDriver>
     | PusherPrivateChannel<BroadcastDriver>
     | PusherEncryptedPrivateChannel<BroadcastDriver>
     | PusherPresenceChannel<BroadcastDriver>;
+
+export type PusherOptions<TBroadcastDriver extends BroadcastDriver> =
+    EchoOptionsWithDefaults<TBroadcastDriver> & {
+        key: string;
+        Pusher?: typeof Pusher;
+    } & PusherJsOptions;
 
 /**
  * This class creates a connector to Pusher.
@@ -36,10 +42,7 @@ export class PusherConnector<
      */
     channels: Record<string, AnyPusherChannel> = {};
 
-    options: EchoOptionsWithDefaults<TBroadcastDriver> & {
-        key: string;
-        Pusher?: typeof Pusher;
-    } & PusherOptions;
+    options: PusherOptions<TBroadcastDriver>;
 
     /**
      * Create a fresh Pusher connection.

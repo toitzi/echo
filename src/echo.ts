@@ -4,7 +4,6 @@ import {
     NullEncryptedPrivateChannel,
     NullPresenceChannel,
     NullPrivateChannel,
-    type PresenceChannel,
     PusherChannel,
     PusherEncryptedPrivateChannel,
     PusherPresenceChannel,
@@ -12,12 +11,14 @@ import {
     SocketIoChannel,
     SocketIoPresenceChannel,
     SocketIoPrivateChannel,
+    type PresenceChannel,
 } from "./channel";
 import {
     Connector,
+    NullConnector,
     PusherConnector,
     SocketIoConnector,
-    NullConnector,
+    type PusherOptions,
 } from "./connector";
 import { isConstructor } from "./util";
 
@@ -59,29 +60,21 @@ export default class Echo<T extends keyof Broadcaster> {
      */
     connect(): void {
         if (this.options.broadcaster === "reverb") {
-            this.connector = new PusherConnector({
+            this.connector = new PusherConnector<"reverb">({
                 ...this.options,
                 cluster: "",
-            } as EchoOptions<"reverb">);
+            });
         } else if (this.options.broadcaster === "pusher") {
-            this.connector = new PusherConnector(
-                this.options as EchoOptions<"pusher">,
-            );
+            this.connector = new PusherConnector<"pusher">(this.options);
         } else if (this.options.broadcaster === "socket.io") {
-            this.connector = new SocketIoConnector(
-                this.options as EchoOptions<"socket.io">,
-            );
+            this.connector = new SocketIoConnector(this.options);
         } else if (this.options.broadcaster === "null") {
-            this.connector = new NullConnector(
-                this.options as EchoOptions<"null">,
-            );
+            this.connector = new NullConnector(this.options);
         } else if (
             typeof this.options.broadcaster === "function" &&
             isConstructor(this.options.broadcaster)
         ) {
-            this.connector = new this.options.broadcaster(
-                this.options as EchoOptions<"function">,
-            );
+            this.connector = new this.options.broadcaster(this.options);
         } else {
             throw new Error(
                 `Broadcaster ${typeof this.options.broadcaster} ${String(this.options.broadcaster)} is not supported.`,
@@ -261,9 +254,16 @@ export default class Echo<T extends keyof Broadcaster> {
 /**
  * Export channel classes for TypeScript.
  */
-export { Connector, Channel, type PresenceChannel };
+export { Channel, Connector, type PresenceChannel };
 
 export { EventFormatter } from "./util";
+
+type CustomOmit<T, K extends PropertyKey> = {
+    [P in keyof T as Exclude<P, K>]: T[P];
+};
+
+type PartialExcept<T, K extends keyof T> = Partial<CustomOmit<T, K>> &
+    Pick<T, K>;
 
 /**
  * Specifies the broadcaster
@@ -275,6 +275,11 @@ export type Broadcaster = {
         private: PusherPrivateChannel<"reverb">;
         encrypted: PusherEncryptedPrivateChannel<"reverb">;
         presence: PusherPresenceChannel<"reverb">;
+        options: GenericOptions<"reverb"> &
+            PartialExcept<
+                CustomOmit<PusherOptions<"reverb">, "cluster">,
+                "key"
+            >;
     };
     pusher: {
         connector: PusherConnector<"pusher">;
@@ -282,6 +287,8 @@ export type Broadcaster = {
         private: PusherPrivateChannel<"pusher">;
         encrypted: PusherEncryptedPrivateChannel<"pusher">;
         presence: PusherPresenceChannel<"pusher">;
+        options: GenericOptions<"pusher"> &
+            PartialExcept<PusherOptions<"pusher">, "key">;
     };
     "socket.io": {
         connector: SocketIoConnector;
@@ -289,6 +296,7 @@ export type Broadcaster = {
         private: SocketIoPrivateChannel;
         encrypted: never;
         presence: SocketIoPresenceChannel;
+        options: GenericOptions<"socket.io">;
     };
     null: {
         connector: NullConnector;
@@ -296,6 +304,7 @@ export type Broadcaster = {
         private: NullPrivateChannel;
         encrypted: NullEncryptedPrivateChannel;
         presence: NullPresenceChannel;
+        options: GenericOptions<"null">;
     };
     function: {
         connector: any;
@@ -303,6 +312,7 @@ export type Broadcaster = {
         private: any;
         encrypted: any;
         presence: any;
+        options: GenericOptions<"function">;
     };
 };
 
@@ -310,7 +320,7 @@ type Constructor<T = {}> = new (...args: any[]) => T;
 
 export type BroadcastDriver = Exclude<keyof Broadcaster, "function">;
 
-export type EchoOptions<TBroadcaster extends keyof Broadcaster> = {
+type GenericOptions<TBroadcaster extends keyof Broadcaster> = {
     /**
      * The broadcast connector.
      */
@@ -334,3 +344,6 @@ export type EchoOptions<TBroadcaster extends keyof Broadcaster> = {
 
     [key: string]: any;
 };
+
+export type EchoOptions<TBroadcaster extends keyof Broadcaster> =
+    Broadcaster[TBroadcaster]["options"];
