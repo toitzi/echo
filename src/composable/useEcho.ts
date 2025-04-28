@@ -1,149 +1,31 @@
 import Pusher from 'pusher-js';
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import Echo, { type Broadcaster, type EchoOptions } from '../echo';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
+import Echo, {
+    type BroadcastDriver,
+    type Broadcaster,
+    type EchoOptions,
+} from '../echo';
 
-// Type definitions
-type AvailableBroadcasters = Exclude<keyof Broadcaster, 'function'>;
+type Connection<T extends BroadcastDriver> =
+    | Broadcaster[T]['public']
+    | Broadcaster[T]['private'];
 
-type Channel<T extends AvailableBroadcasters> = Broadcaster[T]['public'] | Broadcaster[T]['private'];
-
-type ChannelData<T extends AvailableBroadcasters> = {
+type ChannelData<T extends BroadcastDriver> = {
     count: number;
-    channel: Channel<T>;
+    connection: Connection<T>;
 };
 
-interface UseEchoParams<T> {
-    channel: string;
-    event: string | string[];
-    callback: (payload: T) => void;
-    dependencies?: any[];
-    visibility?: 'private' | 'public';
-}
-
-// Singleton instance management
-let echoInstance: Echo<AvailableBroadcasters> | null = null;
-let echoConfig: EchoOptions<AvailableBroadcasters> | null = null;
-const channels: Record<string, ChannelData<AvailableBroadcasters>> = {};
-
-// Exported functions
-export const configureEcho = <T extends AvailableBroadcasters>(config: EchoOptions<T>): void => {
-    echoConfig = config;
-    // Reset the instance if it was already created
-    if (echoInstance) {
-        echoInstance = null;
-    }
+type Channel = {
+    name: string;
+    id: string;
+    private: boolean;
 };
 
-export const echo = <T extends AvailableBroadcasters>(): Echo<T> => getEchoInstance<T>();
+let echoInstance: Echo<BroadcastDriver> | null = null;
+let echoConfig: EchoOptions<BroadcastDriver> | null = null;
+const channels: Record<string, ChannelData<BroadcastDriver>> = {};
 
-// The main composable for using Echo in Vue components
-export const useEcho = <T>(params: UseEchoParams<T>) => {
-    const { channel, event, callback, dependencies = [], visibility = 'private' } = params;
-
-    // Use Vue ref to store the callback
-    const eventCallback = ref(callback);
-
-    // Update the callback ref when the callback changes
-    watch(
-        () => callback,
-        (newCallback) => {
-            eventCallback.value = newCallback;
-        }
-    );
-
-    let subscription: Channel<AvailableBroadcasters> | null = null;
-    let channelName = '';
-    const events = Array.isArray(event) ? event : [event];
-
-    // Setup function to subscribe to channel
-    const setupSubscription = () => {
-        const isPrivate = visibility === 'private';
-        channelName = isPrivate ? `${visibility}-${channel}` : channel;
-
-        // Reuse existing channel subscription or create a new one
-        if (!channels[channelName]) {
-            const channelSubscription = subscribeToChannel(channel, isPrivate);
-            if (!channelSubscription) return;
-
-            channels[channelName] = {
-                count: 1,
-                channel: channelSubscription,
-            };
-        } else {
-            channels[channelName].count += 1;
-        }
-
-        subscription = channels[channelName].channel;
-
-        const listener = (payload: T) => {
-            eventCallback.value(payload);
-        };
-
-        // Subscribe to all events
-        events.forEach((e) => {
-            subscription?.listen(e, listener);
-        });
-    };
-
-    // Cleanup function to unsubscribe from channel
-    const cleanupSubscription = () => {
-        if (!subscription) return;
-
-        events.forEach((e) => {
-            subscription?.stopListening(e);
-        });
-
-        if (channelName && channels[channelName]) {
-            channels[channelName].count -= 1;
-            if (channels[channelName].count === 0) {
-                leaveChannel(channelName);
-                delete channels[channelName];
-            }
-        }
-    };
-
-    // Setup on component mount
-    onMounted(() => {
-        setupSubscription();
-    });
-
-    // Cleanup on component unmount
-    onUnmounted(() => {
-        cleanupSubscription();
-    });
-
-    // Watch dependencies for changes
-    if (dependencies.length > 0) {
-        // Create a function that returns the dependencies array
-        const getDependencies = () => dependencies;
-
-        watch(
-            getDependencies,
-            () => {
-                cleanupSubscription();
-                setupSubscription();
-            },
-            { deep: true }
-        );
-    }
-
-    // Return methods that can be used by the component
-    return {
-        leaveChannel: () => {
-            const channelName = visibility === 'public' ? channel : `${visibility}-${channel}`;
-            if (channels[channelName]) {
-                channels[channelName].count -= 1;
-                if (channels[channelName].count === 0) {
-                    leaveChannel(channelName);
-                    delete channels[channelName];
-                }
-            }
-        },
-    };
-};
-
-// Helper functions
-const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
+const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
     if (echoInstance) {
         return echoInstance as Echo<T>;
     }
@@ -156,18 +38,146 @@ const getEchoInstance = <T extends AvailableBroadcasters>(): Echo<T> => {
 
     echoConfig.Pusher ??= Pusher;
 
-    // Configure Echo with provided config
     echoInstance = new Echo(echoConfig);
 
     return echoInstance as Echo<T>;
 };
 
-const subscribeToChannel = <T extends AvailableBroadcasters>(channelName: string, isPrivate = false): Channel<T> => {
+const resolveChannelSubscription = <T extends BroadcastDriver>(
+    channel: Channel
+): Connection<T> | null => {
+    if (channels[channel.id]) {
+        channels[channel.id].count += 1;
+
+        return channels[channel.id].connection;
+    }
+
+    const channelSubscription = subscribeToChannel<T>(channel);
+
+    if (!channelSubscription) {
+        // eslint-disable-next-line no-console
+        console.warn(`Failed to subscribe to channel: ${channel.id}`);
+        return null;
+    }
+
+    channels[channel.id] = {
+        count: 1,
+        connection: channelSubscription,
+    };
+
+    return channelSubscription;
+};
+
+const subscribeToChannel = <T extends BroadcastDriver>(
+    channel: Channel
+): Connection<T> => {
     const instance = getEchoInstance<T>();
 
-    return isPrivate ? instance.private(channelName) : instance.channel(channelName);
+    return channel.private
+        ? instance.private(channel.name)
+        : instance.channel(channel.name);
 };
 
 const leaveChannel = (channelName: string): void => {
     getEchoInstance().leaveChannel(channelName);
+};
+
+export const configureEcho = <T extends BroadcastDriver>(
+    config: EchoOptions<T>
+): void => {
+    echoConfig = config;
+
+    // Reset the instance if it was already created
+    if (echoInstance) {
+        echoInstance = null;
+    }
+};
+
+export const echo = <T extends BroadcastDriver>(): Echo<T> =>
+    getEchoInstance<T>();
+
+export const useEcho = <T>(
+    channelName: string,
+    event: string | string[],
+    callback: (payload: T) => void,
+    dependencies: any[] = [],
+    visibility: 'private' | 'public' = 'private'
+) => {
+    const eventCallback = ref(callback);
+
+    watch(
+        () => callback,
+        (newCallback) => {
+            eventCallback.value = newCallback;
+        }
+    );
+
+    let subscription: Connection<BroadcastDriver> | null = null;
+    const events = Array.isArray(event) ? event : [event];
+    const isPrivate = visibility === 'private';
+    const channel: Channel = {
+        name: channelName,
+        id: isPrivate ? `${visibility}-${channelName}` : channelName,
+        private: isPrivate,
+    };
+
+    const setupSubscription = () => {
+        subscription = resolveChannelSubscription<BroadcastDriver>(channel);
+
+        if (!subscription) {
+            return;
+        }
+
+        events.forEach((e) => {
+            subscription!.listen(e, eventCallback.value);
+        });
+    };
+
+    const tearDown = () => {
+        if (!channels[channel.id]) {
+            return;
+        }
+
+        channels[channel.id].count -= 1;
+
+        if (channels[channel.id].count === 0) {
+            leaveChannel(channel.id);
+            delete channels[channel.id];
+        }
+    };
+
+    const cleanupSubscription = () => {
+        if (!subscription) {
+            return;
+        }
+
+        events.forEach((e) => {
+            subscription!.stopListening(e);
+        });
+
+        tearDown();
+    };
+
+    onMounted(() => {
+        setupSubscription();
+    });
+
+    onUnmounted(() => {
+        cleanupSubscription();
+    });
+
+    if (dependencies.length > 0) {
+        watch(
+            () => dependencies,
+            () => {
+                cleanupSubscription();
+                setupSubscription();
+            },
+            { deep: true }
+        );
+    }
+
+    return {
+        leaveChannel: tearDown,
+    };
 };
