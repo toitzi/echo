@@ -22,7 +22,7 @@ const config: UserConfig = (() => {
         return {
             build: {
                 lib: {
-                    entry: resolve(__dirname, "src/react.ts"),
+                    entry: resolve(__dirname, "src/index.iife.ts"),
                     name: "EchoReact",
                     formats: ["iife"],
                     fileName: () => "echo-react.iife.js",
@@ -37,7 +37,7 @@ const config: UserConfig = (() => {
         plugins: [dts()],
         build: {
             lib: {
-                entry: resolve(__dirname, "src/react.ts"),
+                entry: resolve(__dirname, "src/index.ts"),
                 formats: ["es", "cjs"],
                 fileName: (format, entryName) => {
                     return `${entryName}.${format === "es" ? "js" : "common.js"}`;
