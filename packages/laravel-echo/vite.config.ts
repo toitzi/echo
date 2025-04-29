@@ -2,36 +2,38 @@ import { resolve } from "path";
 import { defineConfig, UserConfig } from "vite";
 import dts from "vite-plugin-dts";
 
-const rollupOptions = {
-    external: ["pusher-js", "socket.io-client"],
-    output: {
-        globals: {
-            "pusher-js": "Pusher",
-            "socket.io-client": "io",
-        },
-    },
-};
-
-let config: UserConfig;
-
-if (process.env.FORMAT === "iife") {
-    config = {
-        build: {
-            lib: {
-                entry: resolve(__dirname, "src/echo.ts"),
-                name: "Echo",
-                formats: ["iife"],
-                fileName: () => "echo.iife.js",
+const config: UserConfig = (() => {
+    const common: Partial<UserConfig["build"]> = {
+        rollupOptions: {
+            external: ["pusher-js", "socket.io-client"],
+            output: {
+                globals: {
+                    "pusher-js": "Pusher",
+                    "socket.io-client": "io",
+                },
             },
-            rollupOptions,
-            outDir: resolve(__dirname, "dist"),
-            emptyOutDir: false, // Don't empty the output directory for the second build
-            sourcemap: true,
-            minify: true,
         },
+        outDir: resolve(__dirname, "dist"),
+        sourcemap: true,
+        minify: true,
     };
-} else {
-    config = {
+
+    if (process.env.FORMAT === "iife") {
+        return {
+            build: {
+                lib: {
+                    entry: resolve(__dirname, "src/echo.ts"),
+                    name: "Echo",
+                    formats: ["iife"],
+                    fileName: () => "echo.iife.js",
+                },
+                ...common,
+                emptyOutDir: false, // Don't empty the output directory for the second build
+            },
+        };
+    }
+
+    return {
         plugins: [dts()],
         build: {
             lib: {
@@ -41,13 +43,10 @@ if (process.env.FORMAT === "iife") {
                     return `${entryName}.${format === "es" ? "js" : "common.js"}`;
                 },
             },
-            rollupOptions,
-            outDir: resolve(__dirname, "dist"),
             emptyOutDir: true,
-            sourcemap: true,
-            minify: true,
+            ...common,
         },
     };
-}
+})();
 
 export default defineConfig(config);
