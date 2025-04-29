@@ -1,10 +1,10 @@
-import Pusher from "pusher-js";
-import { useCallback, useEffect, useRef } from "react";
 import Echo, {
     type BroadcastDriver,
     type Broadcaster,
     type EchoOptions,
-} from "../echo";
+} from "laravel-echo";
+import Pusher from "pusher-js";
+import { useCallback, useEffect, useRef } from "react";
 
 type Connection<T extends BroadcastDriver> =
     | Broadcaster[T]["public"]

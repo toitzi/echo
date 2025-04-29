@@ -1,10 +1,10 @@
-import Pusher from "pusher-js";
-import { onMounted, onUnmounted, ref, watch } from "vue";
 import Echo, {
     type BroadcastDriver,
     type Broadcaster,
     type EchoOptions,
-} from "../echo";
+} from "laravel-echo";
+import Pusher from "pusher-js";
+import { onMounted, onUnmounted, ref, watch } from "vue";
 
 type Connection<T extends BroadcastDriver> =
     | Broadcaster[T]["public"]
