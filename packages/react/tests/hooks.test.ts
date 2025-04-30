@@ -1,7 +1,27 @@
 import { renderHook } from "@testing-library/react";
+import Echo from "laravel-echo";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getEchoModule = async () => import("../src/hook/use-echo");
+
+vi.mock("laravel-echo", () => {
+    const Echo = vi.fn();
+
+    Echo.prototype.private = vi.fn(() => ({
+        leaveChannel: vi.fn(),
+        listen: vi.fn(),
+        stopListening: vi.fn(),
+    }));
+    Echo.prototype.channel = vi.fn();
+    Echo.prototype.encryptedPrivate = vi.fn();
+    Echo.prototype.presence = vi.fn();
+    Echo.prototype.listen = vi.fn();
+    Echo.prototype.leave = vi.fn();
+    Echo.prototype.leaveChannel = vi.fn();
+    Echo.prototype.leaveAllChannels = vi.fn();
+
+    return { default: Echo };
+});
 
 describe("echo helper", async () => {
     beforeEach(() => {
@@ -52,9 +72,14 @@ describe("without echo configured", async () => {
 
 describe("useEcho hook", async () => {
     let echoModule: typeof import("../src/hook/use-echo");
+    let echoInstance: Echo<"null">;
 
     beforeEach(async () => {
         vi.resetModules();
+
+        echoInstance = new Echo({
+            broadcaster: "null",
+        });
 
         echoModule = await getEchoModule();
 
@@ -63,13 +88,17 @@ describe("useEcho hook", async () => {
         });
     });
 
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
     it("subscribes to a channel and listens for events", async () => {
         const mockCallback = vi.fn();
         const channelName = "test-channel";
         const event = "test-event";
 
         const { result } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback, [], "private"),
+            echoModule.useEcho(channelName, event, mockCallback),
         );
 
         expect(result.current).toHaveProperty("leaveChannel");
@@ -100,9 +129,54 @@ describe("useEcho hook", async () => {
         const event = "test-event";
 
         const { unmount } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback, [], "private"),
+            echoModule.useEcho(channelName, event, mockCallback),
         );
 
+        expect(echoInstance.private).toHaveBeenCalled();
+
         expect(() => unmount()).not.toThrow();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalled();
+    });
+
+    it("won't subscribe multiple times to the same channel", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { unmount: unmount1 } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        const { unmount: unmount2 } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        expect(echoInstance.private).toHaveBeenCalledTimes(1);
+
+        expect(() => unmount1()).not.toThrow();
+
+        expect(echoInstance.leaveChannel).not.toHaveBeenCalled();
+
+        expect(() => unmount2()).not.toThrow();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalled();
+    });
+
+    it("will register callbacks for events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { unmount } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        expect(echoInstance.private).toHaveBeenCalledWith(channelName);
+
+        expect(echoInstance.private(channelName).listen).toHaveBeenCalledWith(
+            event,
+            mockCallback,
+        );
     });
 });
