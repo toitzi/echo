@@ -177,7 +177,9 @@ export const useEcho = <T>(
     }
 
     return {
+        /** Leave channel */
         leaveChannel: tearDown,
+        /** Leave a channel and also its associated private and presence channels */
         leave: () => tearDown(true),
     };
 };

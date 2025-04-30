@@ -137,7 +137,9 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
     }, dependencies);
 
     return {
+        /** Leave channel */
         leaveChannel: tearDown,
+        /** Leave a channel and also its associated private and presence channels */
         leave: () => tearDown(true),
     };
 };
