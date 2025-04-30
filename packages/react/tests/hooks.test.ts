@@ -6,13 +6,20 @@ const getEchoModule = async () => import("../src/hook/use-echo");
 
 vi.mock("laravel-echo", () => {
     const Echo = vi.fn();
-
-    Echo.prototype.private = vi.fn(() => ({
+    const mockPrivateChannel = {
         leaveChannel: vi.fn(),
         listen: vi.fn(),
         stopListening: vi.fn(),
-    }));
-    Echo.prototype.channel = vi.fn();
+    };
+
+    const mockPublicChannel = {
+        leaveChannel: vi.fn(),
+        listen: vi.fn(),
+        stopListening: vi.fn(),
+    };
+
+    Echo.prototype.private = vi.fn(() => mockPrivateChannel);
+    Echo.prototype.channel = vi.fn(() => mockPublicChannel);
     Echo.prototype.encryptedPrivate = vi.fn();
     Echo.prototype.presence = vi.fn();
     Echo.prototype.listen = vi.fn();
@@ -110,17 +117,32 @@ describe("useEcho hook", async () => {
         const channelName = "test-channel";
         const events = ["event1", "event2"];
 
-        const { result } = renderHook(() =>
-            echoModule.useEcho(
-                channelName,
-                events,
-                mockCallback,
-                [],
-                "private",
-            ),
+        const { result, unmount } = renderHook(() =>
+            echoModule.useEcho(channelName, events, mockCallback),
         );
 
         expect(result.current).toHaveProperty("leaveChannel");
+
+        expect(echoInstance.private).toHaveBeenCalledWith(channelName);
+
+        expect(echoInstance.private(channelName).listen).toHaveBeenCalledWith(
+            events[0],
+            mockCallback,
+        );
+
+        expect(echoInstance.private(channelName).listen).toHaveBeenCalledWith(
+            events[1],
+            mockCallback,
+        );
+
+        expect(() => unmount()).not.toThrow();
+
+        expect(
+            echoInstance.private(channelName).stopListening,
+        ).toHaveBeenCalledWith(events[0], mockCallback);
+        expect(
+            echoInstance.private(channelName).stopListening,
+        ).toHaveBeenCalledWith(events[1], mockCallback);
     });
 
     it("cleans up subscriptions on unmount", async () => {
@@ -178,5 +200,37 @@ describe("useEcho hook", async () => {
             event,
             mockCallback,
         );
+    });
+
+    it("can leave a channel", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { result } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        result.current.leaveChannel();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
+            "private-" + channelName,
+        );
+    });
+
+    it("can connect to a public channel", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { result } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback, [], "public"),
+        );
+
+        expect(echoInstance.channel).toHaveBeenCalledWith(channelName);
+
+        result.current.leaveChannel();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
     });
 });
