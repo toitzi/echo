@@ -152,7 +152,7 @@ export const useEcho = <T>(
         }
 
         events.forEach((e) => {
-            subscription!.stopListening(e);
+            subscription!.stopListening(e, eventCallback.value);
         });
 
         tearDown();

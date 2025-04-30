@@ -46,6 +46,10 @@ const config: UserConfig = (() => {
             emptyOutDir: true,
             ...common,
         },
+        test: {
+            globals: true,
+            environment: "jsdom",
+        },
     };
 })();
 

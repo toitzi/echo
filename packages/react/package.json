@@ -38,9 +38,6 @@
         "@babel/plugin-transform-numeric-separator": "^7.25.9",
         "@babel/plugin-transform-object-assign": "^7.25.9",
         "@babel/preset-env": "^7.26.7",
-        "@rollup/plugin-babel": "^6.0.0",
-        "@rollup/plugin-node-resolve": "^16.0.0",
-        "@rollup/plugin-typescript": "^12.1.2",
         "@testing-library/dom": "^10.4.0",
         "@testing-library/react": "^14.3.1",
         "@testing-library/react-hooks": "^8.0.1",
@@ -58,7 +55,6 @@
         "pusher-js": "^8.0",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
-        "rollup": "^3.0.0",
         "socket.io-client": "^4.0",
         "standard-version": "^9.3.2",
         "ts-jest": "^29.2.5",
@@ -84,9 +80,9 @@
     },
     "exports": {
         ".": {
-            "import": "./dist/react.js",
-            "require": "./dist/react.common.js",
-            "types": "./dist/react.d.ts"
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.common.js"
         }
     },
     "overrides": {

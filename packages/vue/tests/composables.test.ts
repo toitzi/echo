@@ -1,8 +1,57 @@
-import { renderHook } from "@testing-library/react";
+import { mount } from "@vue/test-utils";
 import Echo from "laravel-echo";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { defineComponent } from "vue";
+import { configureEcho, useEcho } from "../src/composable/useEcho";
 
-const getEchoModule = async () => import("../src/hook/use-echo");
+const getEchoModule = async () => import("../src/composable/useEcho");
+
+const getUnConfiguredTestComponent = (
+    channelName: string,
+    event: string | string[],
+    callback: (data: any) => void,
+    visibility: "private" | "public" = "private",
+) => {
+    const TestComponent = defineComponent({
+        setup() {
+            return {
+                ...useEcho(channelName, event, callback, [], visibility),
+            };
+        },
+        template: "<div></div>",
+    });
+
+    return mount(TestComponent);
+};
+
+const getTestComponent = (
+    channelName: string,
+    event: string | string[],
+    callback: (data: any) => void,
+    dependencies: any[] = [],
+    visibility: "private" | "public" = "private",
+) => {
+    const TestComponent = defineComponent({
+        setup() {
+            configureEcho({
+                broadcaster: "null",
+            });
+
+            return {
+                ...useEcho(
+                    channelName,
+                    event,
+                    callback,
+                    dependencies,
+                    visibility,
+                ),
+            };
+        },
+        template: "<div></div>",
+    });
+
+    return mount(TestComponent);
+};
 
 vi.mock("laravel-echo", () => {
     const mockPrivateChannel = {
@@ -36,6 +85,10 @@ describe("echo helper", async () => {
         vi.resetModules();
     });
 
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
     it("throws error when Echo is not configured", async () => {
         const echoModule = await getEchoModule();
 
@@ -58,29 +111,29 @@ describe("without echo configured", async () => {
         vi.resetModules();
     });
 
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
     it("throws error when Echo is not configured", async () => {
-        const echoModule = await getEchoModule();
         const mockCallback = vi.fn();
         const channelName = "test-channel";
         const event = "test-event";
 
         expect(() =>
-            renderHook(() =>
-                echoModule.useEcho(
-                    channelName,
-                    event,
-                    mockCallback,
-                    [],
-                    "private",
-                ),
+            getUnConfiguredTestComponent(
+                channelName,
+                event,
+                mockCallback,
+                "private",
             ),
         ).toThrow("Echo has not been configured");
     });
 });
 
 describe("useEcho hook", async () => {
-    let echoModule: typeof import("../src/hook/use-echo");
     let echoInstance: Echo<"null">;
+    let wrapper: ReturnType<typeof getTestComponent>;
 
     beforeEach(async () => {
         vi.resetModules();
@@ -88,15 +141,10 @@ describe("useEcho hook", async () => {
         echoInstance = new Echo({
             broadcaster: "null",
         });
-
-        echoModule = await getEchoModule();
-
-        echoModule.configureEcho({
-            broadcaster: "null",
-        });
     });
 
     afterEach(() => {
+        wrapper.unmount();
         vi.clearAllMocks();
     });
 
@@ -105,12 +153,10 @@ describe("useEcho hook", async () => {
         const channelName = "test-channel";
         const event = "test-event";
 
-        const { result } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback),
-        );
+        wrapper = getTestComponent(channelName, event, mockCallback);
 
-        expect(result.current).toHaveProperty("leaveChannel");
-        expect(typeof result.current.leaveChannel).toBe("function");
+        expect(wrapper.vm).toHaveProperty("leaveChannel");
+        expect(typeof wrapper.vm.leaveChannel).toBe("function");
     });
 
     it("handles multiple events", async () => {
@@ -118,11 +164,10 @@ describe("useEcho hook", async () => {
         const channelName = "test-channel";
         const events = ["event1", "event2"];
 
-        const { result, unmount } = renderHook(() =>
-            echoModule.useEcho(channelName, events, mockCallback),
-        );
+        wrapper = getTestComponent(channelName, events, mockCallback);
 
-        expect(result.current).toHaveProperty("leaveChannel");
+        expect(wrapper.vm).toHaveProperty("leaveChannel");
+        expect(typeof wrapper.vm.leaveChannel).toBe("function");
 
         expect(echoInstance.private).toHaveBeenCalledWith(channelName);
 
@@ -131,7 +176,7 @@ describe("useEcho hook", async () => {
         expect(channel.listen).toHaveBeenCalledWith(events[0], mockCallback);
         expect(channel.listen).toHaveBeenCalledWith(events[1], mockCallback);
 
-        expect(() => unmount()).not.toThrow();
+        wrapper.unmount();
 
         expect(channel.stopListening).toHaveBeenCalledWith(
             events[0],
@@ -148,13 +193,11 @@ describe("useEcho hook", async () => {
         const channelName = "test-channel";
         const event = "test-event";
 
-        const { unmount } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback),
-        );
+        wrapper = getTestComponent(channelName, event, mockCallback);
 
         expect(echoInstance.private).toHaveBeenCalled();
 
-        expect(() => unmount()).not.toThrow();
+        wrapper.unmount();
 
         expect(echoInstance.leaveChannel).toHaveBeenCalled();
     });
@@ -164,21 +207,17 @@ describe("useEcho hook", async () => {
         const channelName = "test-channel";
         const event = "test-event";
 
-        const { unmount: unmount1 } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback),
-        );
+        wrapper = getTestComponent(channelName, event, mockCallback);
 
-        const { unmount: unmount2 } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback),
-        );
+        const wrapper2 = getTestComponent(channelName, event, mockCallback);
 
         expect(echoInstance.private).toHaveBeenCalledTimes(1);
 
-        expect(() => unmount1()).not.toThrow();
+        wrapper.unmount();
 
         expect(echoInstance.leaveChannel).not.toHaveBeenCalled();
 
-        expect(() => unmount2()).not.toThrow();
+        wrapper2.unmount();
 
         expect(echoInstance.leaveChannel).toHaveBeenCalled();
     });
@@ -188,9 +227,7 @@ describe("useEcho hook", async () => {
         const channelName = "test-channel";
         const event = "test-event";
 
-        const { unmount } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback),
-        );
+        wrapper = getTestComponent(channelName, event, mockCallback);
 
         expect(echoInstance.private).toHaveBeenCalledWith(channelName);
 
@@ -205,11 +242,9 @@ describe("useEcho hook", async () => {
         const channelName = "test-channel";
         const event = "test-event";
 
-        const { result } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback),
-        );
+        wrapper = getTestComponent(channelName, event, mockCallback);
 
-        result.current.leaveChannel();
+        wrapper.vm.leaveChannel();
 
         expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
             "private-" + channelName,
@@ -221,13 +256,17 @@ describe("useEcho hook", async () => {
         const channelName = "test-channel";
         const event = "test-event";
 
-        const { result } = renderHook(() =>
-            echoModule.useEcho(channelName, event, mockCallback, [], "public"),
+        wrapper = getTestComponent(
+            channelName,
+            event,
+            mockCallback,
+            [],
+            "public",
         );
 
         expect(echoInstance.channel).toHaveBeenCalledWith(channelName);
 
-        result.current.leaveChannel();
+        wrapper.vm.leaveChannel();
 
         expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
     });
