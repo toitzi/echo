@@ -66,6 +66,11 @@ export default class Echo<T extends keyof Broadcaster> {
             });
         } else if (this.options.broadcaster === "pusher") {
             this.connector = new PusherConnector<"pusher">(this.options);
+        } else if (this.options.broadcaster === "ably") {
+            this.connector = new PusherConnector<"pusher">({
+                ...this.options,
+                broadcaster: "pusher",
+            });
         } else if (this.options.broadcaster === "socket.io") {
             this.connector = new SocketIoConnector(this.options);
         } else if (this.options.broadcaster === "null") {
@@ -262,9 +267,6 @@ type CustomOmit<T, K extends PropertyKey> = {
     [P in keyof T as Exclude<P, K>]: T[P];
 };
 
-type PartialExcept<T, K extends keyof T> = Partial<CustomOmit<T, K>> &
-    Pick<T, K>;
-
 /**
  * Specifies the broadcaster
  */
@@ -276,10 +278,7 @@ export type Broadcaster = {
         encrypted: PusherEncryptedPrivateChannel<"reverb">;
         presence: PusherPresenceChannel<"reverb">;
         options: GenericOptions<"reverb"> &
-            PartialExcept<
-                CustomOmit<PusherOptions<"reverb">, "cluster">,
-                "key"
-            >;
+            Partial<CustomOmit<PusherOptions<"reverb">, "cluster">>;
     };
     pusher: {
         connector: PusherConnector<"pusher">;
@@ -287,8 +286,15 @@ export type Broadcaster = {
         private: PusherPrivateChannel<"pusher">;
         encrypted: PusherEncryptedPrivateChannel<"pusher">;
         presence: PusherPresenceChannel<"pusher">;
-        options: GenericOptions<"pusher"> &
-            PartialExcept<PusherOptions<"pusher">, "key">;
+        options: GenericOptions<"pusher"> & Partial<PusherOptions<"pusher">>;
+    };
+    ably: {
+        connector: PusherConnector<"pusher">;
+        public: PusherChannel<"pusher">;
+        private: PusherPrivateChannel<"pusher">;
+        encrypted: PusherEncryptedPrivateChannel<"pusher">;
+        presence: PusherPresenceChannel<"pusher">;
+        options: GenericOptions<"ably"> & Partial<PusherOptions<"ably">>;
     };
     "socket.io": {
         connector: SocketIoConnector;

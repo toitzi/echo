@@ -139,6 +139,14 @@ export const configureEcho = <T extends BroadcastDriver>(
         null: {
             broadcaster: "null",
         },
+        ably: {
+            broadcaster: "pusher",
+            key: import.meta.env.VITE_ABLY_PUBLIC_KEY,
+            wsHost: "realtime-pusher.ably.io",
+            wsPort: 443,
+            disableStats: true,
+            encrypted: true,
+        },
     };
 
     echoConfig = {

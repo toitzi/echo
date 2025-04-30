@@ -12,6 +12,8 @@ interface ImportMetaEnv {
     readonly VITE_REVERB_SCHEME: string;
 
     readonly VITE_SOCKET_IO_HOST: string;
+
+    readonly VITE_ABLY_PUBLIC_KEY: string;
 }
 
 interface ImportMeta {
