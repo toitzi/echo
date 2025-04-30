@@ -60,6 +60,11 @@ const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
     delete channels[channel.id];
 };
 
+/**
+ * Configure the Echo instance with sensible defaults.
+ *
+ * @link https://laravel.com/docs/broadcasting#client-side-installation
+ */
 export const configureEcho = <T extends BroadcastDriver>(
     config: EchoOptions<T>,
 ): void => {
@@ -96,7 +101,7 @@ export const configureEcho = <T extends BroadcastDriver>(
     echoConfig = {
         ...defaults[config.broadcaster],
         ...config,
-    };
+    } as EchoOptions<BroadcastDriver>;
 
     // Reset the instance if it was already created
     if (echoInstance) {
