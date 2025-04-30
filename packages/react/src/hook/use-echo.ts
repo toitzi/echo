@@ -35,17 +35,24 @@ const subscribeToChannel = <T extends BroadcastDriver>(
         : instance.channel(channel.name);
 };
 
-const leaveChannel = (channel: Channel): void => {
+const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
     if (!channels[channel.id]) {
         return;
     }
 
     channels[channel.id].count -= 1;
 
-    if (channels[channel.id].count === 0) {
-        getEchoInstance().leaveChannel(channel.id);
-        delete channels[channel.id];
+    if (channels[channel.id].count > 0) {
+        return;
     }
+
+    if (leaveAll) {
+        getEchoInstance().leave(channel.name);
+    } else {
+        getEchoInstance().leaveChannel(channel.id);
+    }
+
+    delete channels[channel.id];
 };
 
 export const configureEcho = <T extends BroadcastDriver>(
@@ -105,12 +112,12 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
         private: isPrivate,
     };
 
-    const tearDown = useCallback(() => {
+    const tearDown = useCallback((leaveAll: boolean = false) => {
         events.forEach((e) => {
             subscription.current!.stopListening(e, callbackFunc);
         });
 
-        leaveChannel(channel);
+        leaveChannel(channel, leaveAll);
     }, dependencies);
 
     useEffect(() => {
@@ -131,6 +138,7 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
 
     return {
         leaveChannel: tearDown,
+        leave: () => tearDown(true),
     };
 };
 

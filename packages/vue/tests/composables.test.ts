@@ -157,6 +157,9 @@ describe("useEcho hook", async () => {
 
         expect(wrapper.vm).toHaveProperty("leaveChannel");
         expect(typeof wrapper.vm.leaveChannel).toBe("function");
+
+        expect(wrapper.vm).toHaveProperty("leave");
+        expect(typeof wrapper.vm.leave).toBe("function");
     });
 
     it("handles multiple events", async () => {
@@ -249,6 +252,18 @@ describe("useEcho hook", async () => {
         expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
             "private-" + channelName,
         );
+    });
+
+    it("can leave all channel variations", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getTestComponent(channelName, event, mockCallback);
+
+        wrapper.vm.leave();
+
+        expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
     });
 
     it("can connect to a public channel", async () => {

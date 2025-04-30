@@ -110,6 +110,9 @@ describe("useEcho hook", async () => {
         );
 
         expect(result.current).toHaveProperty("leaveChannel");
+        expect(typeof result.current.leave).toBe("function");
+
+        expect(result.current).toHaveProperty("leave");
         expect(typeof result.current.leaveChannel).toBe("function");
     });
 
@@ -214,6 +217,20 @@ describe("useEcho hook", async () => {
         expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
             "private-" + channelName,
         );
+    });
+
+    it("can leave all channel variations", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { result } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        result.current.leave();
+
+        expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
     });
 
     it("can connect to a public channel", async () => {
