@@ -8,7 +8,8 @@ import { useCallback, useEffect, useRef } from "react";
 
 type Connection<T extends BroadcastDriver> =
     | Broadcaster[T]["public"]
-    | Broadcaster[T]["private"];
+    | Broadcaster[T]["private"]
+    | Broadcaster[T]["presence"];
 
 type ChannelData<T extends BroadcastDriver> = {
     count: number;
@@ -18,7 +19,7 @@ type ChannelData<T extends BroadcastDriver> = {
 type Channel = {
     name: string;
     id: string;
-    private: boolean;
+    visibility: "private" | "public" | "presence";
 };
 
 type ConfigDefaults<O extends BroadcastDriver> = Record<
@@ -57,9 +58,33 @@ const subscribeToChannel = <T extends BroadcastDriver>(
 ): Connection<T> => {
     const instance = getEchoInstance<T>();
 
-    return channel.private
-        ? instance.private(channel.name)
-        : instance.channel(channel.name);
+    if (channel.visibility === "presence") {
+        return instance.join(channel.name);
+    }
+
+    if (channel.visibility === "private") {
+        return instance.private(channel.name);
+    }
+
+    return instance.channel(channel.name);
+};
+
+const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
+    if (echoInstance) {
+        return echoInstance as Echo<T>;
+    }
+
+    if (!echoConfig) {
+        throw new Error(
+            "Echo has not been configured. Please call `configureEcho()`.",
+        );
+    }
+
+    echoConfig.Pusher ??= Pusher;
+
+    echoInstance = new Echo(echoConfig);
+
+    return echoInstance as Echo<T>;
 };
 
 const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
@@ -84,6 +109,31 @@ const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
 
 const toArray = <T>(item: T | T[]): T[] =>
     Array.isArray(item) ? item : [item];
+
+const resolveChannelSubscription = <T extends BroadcastDriver>(
+    channel: Channel,
+): Connection<T> | void => {
+    if (channels[channel.id]) {
+        channels[channel.id].count += 1;
+
+        return channels[channel.id].connection;
+    }
+
+    const channelSubscription = subscribeToChannel<T>(channel);
+
+    if (!channelSubscription) {
+        // eslint-disable-next-line no-console
+        console.warn(`Failed to subscribe to channel: ${channel.id}`);
+        return;
+    }
+
+    channels[channel.id] = {
+        count: 1,
+        connection: channelSubscription,
+    };
+
+    return channelSubscription;
+};
 
 /**
  * Configure the Echo instance with sensible defaults.
@@ -142,66 +192,26 @@ export const configureEcho = <T extends BroadcastDriver>(
     }
 };
 
-const resolveChannelSubscription = <T extends BroadcastDriver>(
-    channel: Channel,
-): Connection<T> | void => {
-    if (channels[channel.id]) {
-        channels[channel.id].count += 1;
-
-        return channels[channel.id].connection;
-    }
-
-    const channelSubscription = subscribeToChannel<T>(channel);
-
-    if (!channelSubscription) {
-        // eslint-disable-next-line no-console
-        console.warn(`Failed to subscribe to channel: ${channel.id}`);
-        return;
-    }
-
-    channels[channel.id] = {
-        count: 1,
-        connection: channelSubscription,
-    };
-
-    return channelSubscription;
-};
-
 export const echo = <T extends BroadcastDriver>(): Echo<T> =>
     getEchoInstance<T>();
-
-export const useEchoModel = <T, M extends string>(
-    model: M,
-    identifier: string | number,
-    event: ModelEvents<M> | ModelEvents<M>[],
-    callback: (payload: T) => void,
-    dependencies: any[] = [],
-) => {
-    return useEcho(
-        `${model}.${identifier}`,
-        toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
-        callback,
-        dependencies,
-        "private",
-    );
-};
 
 export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
     channelName: string,
     event: string | string[],
     callback: (payload: T) => void,
     dependencies: any[] = [],
-    visibility: "private" | "public" = "private",
+    visibility: Channel["visibility"] = "private",
 ) => {
     const callbackFunc = useCallback(callback, dependencies);
     const subscription = useRef<Connection<K> | null>(null);
 
-    const isPrivate = visibility === "private";
     const events = toArray(event);
     const channel: Channel = {
         name: channelName,
-        id: isPrivate ? `${visibility}-${channelName}` : channelName,
-        private: isPrivate,
+        id: ["private", "presence"].includes(visibility)
+            ? `${visibility}-${channelName}`
+            : channelName,
+        visibility,
     };
 
     const stopListening = () => {
@@ -245,23 +255,25 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
          * Stop listening for an event without leaving the channel
          */
         stopListening,
+        /**
+         * Channel instance
+         */
+        channel: subscription.current,
     };
 };
 
-const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
-    if (echoInstance) {
-        return echoInstance as Echo<T>;
-    }
-
-    if (!echoConfig) {
-        throw new Error(
-            "Echo has not been configured. Please call `configureEcho()`.",
-        );
-    }
-
-    echoConfig.Pusher ??= Pusher;
-
-    echoInstance = new Echo(echoConfig);
-
-    return echoInstance as Echo<T>;
+export const useEchoModel = <T, M extends string>(
+    model: M,
+    identifier: string | number,
+    event: ModelEvents<M> | ModelEvents<M>[],
+    callback: (payload: T) => void,
+    dependencies: any[] = [],
+) => {
+    return useEcho(
+        `${model}.${identifier}`,
+        toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
+        callback,
+        dependencies,
+        "private",
+    );
 };
