@@ -31,6 +31,15 @@ type ModelPayload<T> = {
     model: T;
 };
 
+type ChannelReturnType<
+    T extends BroadcastDriver,
+    V extends Channel["visibility"],
+> = V extends "presence"
+    ? Broadcaster[T]["presence"]
+    : V extends "private"
+      ? Broadcaster[T]["private"]
+      : Broadcaster[T]["public"];
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type ModelName<T extends string> = T extends `${infer _}.${infer U}`
     ? ModelName<U>
@@ -199,28 +208,19 @@ export const configureEcho = <T extends BroadcastDriver>(
 export const echo = <T extends BroadcastDriver>(): Echo<T> =>
     getEchoInstance<T>();
 
-type ChannelReturnType<
-    T extends BroadcastDriver,
-    V extends Channel["visibility"],
-> = V extends "presence"
-    ? Broadcaster[T]["presence"]
-    : V extends "private"
-      ? Broadcaster[T]["private"]
-      : Broadcaster[T]["public"];
-
 export const useEcho = <
-    T,
-    K extends BroadcastDriver = BroadcastDriver,
-    V extends Channel["visibility"] = "private",
+    TPayload,
+    TDriver extends BroadcastDriver = BroadcastDriver,
+    TVisibility extends Channel["visibility"] = "private",
 >(
     channelName: string,
     event: string | string[],
-    callback: (payload: T) => void,
+    callback: (payload: TPayload) => void,
     dependencies: any[] = [],
-    visibility: V = "private" as V,
+    visibility: TVisibility = "private" as TVisibility,
 ) => {
     const callbackFunc = useCallback(callback, dependencies);
-    const subscription = useRef<Connection<K> | null>(null);
+    const subscription = useRef<Connection<TDriver> | null>(null);
 
     const events = toArray(event);
     const channel: Channel = {
@@ -244,7 +244,8 @@ export const useEcho = <
     }, dependencies);
 
     useEffect(() => {
-        const channelSubscription = resolveChannelSubscription<K>(channel);
+        const channelSubscription =
+            resolveChannelSubscription<TDriver>(channel);
 
         if (!channelSubscription) {
             return;
@@ -275,17 +276,23 @@ export const useEcho = <
         /**
          * Channel instance
          */
-        channel: subscription.current as ChannelReturnType<K, V>,
+        channel: subscription.current as ChannelReturnType<
+            TDriver,
+            TVisibility
+        >,
     };
 };
 
-export const useEchoPresence = <T, K extends BroadcastDriver = BroadcastDriver>(
+export const useEchoPresence = <
+    TPayload,
+    TDriver extends BroadcastDriver = BroadcastDriver,
+>(
     channelName: string,
     event: string | string[],
-    callback: (payload: T) => void,
+    callback: (payload: TPayload) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho<T, K, "presence">(
+    return useEcho<TPayload, TDriver, "presence">(
         channelName,
         event,
         callback,
@@ -294,13 +301,16 @@ export const useEchoPresence = <T, K extends BroadcastDriver = BroadcastDriver>(
     );
 };
 
-export const useEchoPublic = <T, K extends BroadcastDriver = BroadcastDriver>(
+export const useEchoPublic = <
+    TPayload,
+    TDriver extends BroadcastDriver = BroadcastDriver,
+>(
     channelName: string,
     event: string | string[],
-    callback: (payload: T) => void,
+    callback: (payload: TPayload) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho<T, K, "public">(
+    return useEcho<TPayload, TDriver, "public">(
         channelName,
         event,
         callback,
@@ -309,14 +319,14 @@ export const useEchoPublic = <T, K extends BroadcastDriver = BroadcastDriver>(
     );
 };
 
-export const useEchoModel = <T, M extends string>(
-    model: M,
+export const useEchoModel = <TPayload, TModel extends string>(
+    model: TModel,
     identifier: string | number,
-    event: ModelEvents<M> | ModelEvents<M>[],
-    callback: (payload: ModelPayload<T>) => void,
+    event: ModelEvents<TModel> | ModelEvents<TModel>[],
+    callback: (payload: ModelPayload<TPayload>) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho<ModelPayload<T>>(
+    return useEcho<ModelPayload<TPayload>>(
         `${model}.${identifier}`,
         toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
         callback,

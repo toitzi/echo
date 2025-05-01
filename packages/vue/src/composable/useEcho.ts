@@ -18,7 +18,7 @@ type ChannelData<T extends BroadcastDriver> = {
 type Channel = {
     name: string;
     id: string;
-    private: boolean;
+    visibility: "private" | "public" | "presence";
 };
 
 type ConfigDefaults<O extends BroadcastDriver> = Record<
@@ -26,9 +26,47 @@ type ConfigDefaults<O extends BroadcastDriver> = Record<
     Broadcaster[O]["options"]
 >;
 
+type ModelPayload<T> = {
+    model: T;
+};
+
+type ChannelReturnType<
+    T extends BroadcastDriver,
+    V extends Channel["visibility"],
+> = V extends "presence"
+    ? Broadcaster[T]["presence"]
+    : V extends "private"
+      ? Broadcaster[T]["private"]
+      : Broadcaster[T]["public"];
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type ModelName<T extends string> = T extends `${infer _}.${infer U}`
+    ? ModelName<U>
+    : T;
+
+type ModelEvents<T extends string> =
+    | `${ModelName<T>}Retrieved`
+    | `${ModelName<T>}Creating`
+    | `${ModelName<T>}Created`
+    | `${ModelName<T>}Updating`
+    | `${ModelName<T>}Updated`
+    | `${ModelName<T>}Saving`
+    | `${ModelName<T>}Saved`
+    | `${ModelName<T>}Deleting`
+    | `${ModelName<T>}Deleted`
+    | `${ModelName<T>}Trashed`
+    | `${ModelName<T>}ForceDeleting`
+    | `${ModelName<T>}ForceDeleted`
+    | `${ModelName<T>}Restoring`
+    | `${ModelName<T>}Restored`
+    | `${ModelName<T>}Replicating`;
+
 let echoInstance: Echo<BroadcastDriver> | null = null;
 let echoConfig: EchoOptions<BroadcastDriver> | null = null;
 const channels: Record<string, ChannelData<BroadcastDriver>> = {};
+
+const toArray = <T>(item: T | T[]): T[] =>
+    Array.isArray(item) ? item : [item];
 
 const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
     if (echoInstance) {
@@ -78,9 +116,15 @@ const subscribeToChannel = <T extends BroadcastDriver>(
 ): Connection<T> => {
     const instance = getEchoInstance<T>();
 
-    return channel.private
-        ? instance.private(channel.name)
-        : instance.channel(channel.name);
+    if (channel.visibility === "presence") {
+        return instance.join(channel.name);
+    }
+
+    if (channel.visibility === "private") {
+        return instance.private(channel.name);
+    }
+
+    return instance.channel(channel.name);
 };
 
 const leaveChannel = (channel: Channel, leaveAll: boolean = false): void => {
@@ -163,12 +207,16 @@ export const configureEcho = <T extends BroadcastDriver>(
 export const echo = <T extends BroadcastDriver>(): Echo<T> =>
     getEchoInstance<T>();
 
-export const useEcho = <T>(
+export const useEcho = <
+    TPayload,
+    TDriver extends BroadcastDriver = BroadcastDriver,
+    TVisibility extends Channel["visibility"] = "private",
+>(
     channelName: string,
     event: string | string[],
-    callback: (payload: T) => void,
+    callback: (payload: TPayload) => void,
     dependencies: any[] = [],
-    visibility: "private" | "public" = "private",
+    visibility: TVisibility = "private" as TVisibility,
 ) => {
     const eventCallback = ref(callback);
 
@@ -179,17 +227,17 @@ export const useEcho = <T>(
         },
     );
 
-    let subscription: Connection<BroadcastDriver> | null = null;
+    let subscription: Connection<TDriver> | null = null;
     const events = Array.isArray(event) ? event : [event];
     const isPrivate = visibility === "private";
     const channel: Channel = {
         name: channelName,
         id: isPrivate ? `${visibility}-${channelName}` : channelName,
-        private: isPrivate,
+        visibility,
     };
 
     const setupSubscription = () => {
-        subscription = resolveChannelSubscription<BroadcastDriver>(channel);
+        subscription = resolveChannelSubscription<TDriver>(channel);
 
         if (!subscription) {
             return;
@@ -233,4 +281,56 @@ export const useEcho = <T>(
         /** Leave a channel and also its associated private and presence channels */
         leave: () => tearDown(true),
     };
+};
+
+export const useEchoPresence = <
+    TPayload,
+    TDriver extends BroadcastDriver = BroadcastDriver,
+>(
+    channelName: string,
+    event: string | string[],
+    callback: (payload: TPayload) => void,
+    dependencies: any[] = [],
+) => {
+    return useEcho<TPayload, TDriver, "presence">(
+        channelName,
+        event,
+        callback,
+        dependencies,
+        "presence",
+    );
+};
+
+export const useEchoPublic = <
+    TPayload,
+    TDriver extends BroadcastDriver = BroadcastDriver,
+>(
+    channelName: string,
+    event: string | string[],
+    callback: (payload: TPayload) => void,
+    dependencies: any[] = [],
+) => {
+    return useEcho<TPayload, TDriver, "public">(
+        channelName,
+        event,
+        callback,
+        dependencies,
+        "public",
+    );
+};
+
+export const useEchoModel = <TPayload, TModel extends string>(
+    model: TModel,
+    identifier: string | number,
+    event: ModelEvents<TModel> | ModelEvents<TModel>[],
+    callback: (payload: ModelPayload<TPayload>) => void,
+    dependencies: any[] = [],
+) => {
+    return useEcho<ModelPayload<TPayload>>(
+        `${model}.${identifier}`,
+        toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
+        callback,
+        dependencies,
+        "private",
+    );
 };
