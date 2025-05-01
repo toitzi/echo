@@ -204,12 +204,16 @@ type ChannelReturnType<
       ? Broadcaster[T]["private"]
       : Broadcaster[T]["public"];
 
-export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
+export const useEcho = <
+    T,
+    K extends BroadcastDriver = BroadcastDriver,
+    V extends Channel["visibility"] = "private",
+>(
     channelName: string,
     event: string | string[],
     callback: (payload: T) => void,
     dependencies: any[] = [],
-    visibility: Channel["visibility"] = "private",
+    visibility: V = "private" as V,
 ) => {
     const callbackFunc = useCallback(callback, dependencies);
     const subscription = useRef<Connection<K> | null>(null);
@@ -267,11 +271,38 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
         /**
          * Channel instance
          */
-        channel: subscription.current as ChannelReturnType<
-            K,
-            typeof visibility
-        >,
+        channel: subscription.current as ChannelReturnType<K, V>,
     };
+};
+
+export const useEchoPresence = <T, K extends BroadcastDriver = BroadcastDriver>(
+    channelName: string,
+    event: string | string[],
+    callback: (payload: T) => void,
+    dependencies: any[] = [],
+) => {
+    return useEcho<T, K, "presence">(
+        channelName,
+        event,
+        callback,
+        dependencies,
+        "presence",
+    );
+};
+
+export const useEchoPublic = <T, K extends BroadcastDriver = BroadcastDriver>(
+    channelName: string,
+    event: string | string[],
+    callback: (payload: T) => void,
+    dependencies: any[] = [],
+) => {
+    return useEcho<T, K, "public">(
+        channelName,
+        event,
+        callback,
+        dependencies,
+        "public",
+    );
 };
 
 export const useEchoModel = <T, M extends string>(
