@@ -164,11 +164,9 @@ export const useEchoModel = <T, M extends string>(
     callback: (payload: T) => void,
     dependencies: any[] = [],
 ) => {
-    const events = toArray(event).map((e) => `.${e}`);
-
     return useEcho(
         `${model}.${identifier}`,
-        events,
+        toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
         callback,
         dependencies,
         "private",
