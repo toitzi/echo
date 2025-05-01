@@ -195,6 +195,15 @@ export const configureEcho = <T extends BroadcastDriver>(
 export const echo = <T extends BroadcastDriver>(): Echo<T> =>
     getEchoInstance<T>();
 
+type ChannelReturnType<
+    T extends BroadcastDriver,
+    V extends Channel["visibility"],
+> = V extends "presence"
+    ? Broadcaster[T]["presence"]
+    : V extends "private"
+      ? Broadcaster[T]["private"]
+      : Broadcaster[T]["public"];
+
 export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
     channelName: string,
     event: string | string[],
@@ -258,7 +267,10 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
         /**
          * Channel instance
          */
-        channel: subscription.current,
+        channel: subscription.current as ChannelReturnType<
+            K,
+            typeof visibility
+        >,
     };
 };
 
