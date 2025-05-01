@@ -26,6 +26,28 @@ type ConfigDefaults<O extends BroadcastDriver> = Record<
     Broadcaster[O]["options"]
 >;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type ModelName<T extends string> = T extends `${infer _}.${infer U}`
+    ? ModelName<U>
+    : T;
+
+type ModelEvents<T extends string> =
+    | `${ModelName<T>}Retrieved`
+    | `${ModelName<T>}Creating`
+    | `${ModelName<T>}Created`
+    | `${ModelName<T>}Updating`
+    | `${ModelName<T>}Updated`
+    | `${ModelName<T>}Saving`
+    | `${ModelName<T>}Saved`
+    | `${ModelName<T>}Deleting`
+    | `${ModelName<T>}Deleted`
+    | `${ModelName<T>}Trashed`
+    | `${ModelName<T>}ForceDeleting`
+    | `${ModelName<T>}ForceDeleted`
+    | `${ModelName<T>}Restoring`
+    | `${ModelName<T>}Restored`
+    | `${ModelName<T>}Replicating`;
+
 let echoInstance: Echo<BroadcastDriver> | null = null;
 let echoConfig: EchoOptions<BroadcastDriver> | null = null;
 const channels: Record<string, ChannelData<BroadcastDriver>> = {};
@@ -59,6 +81,9 @@ const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
 
     delete channels[channel.id];
 };
+
+const toArray = <T>(item: T | T[]): T[] =>
+    Array.isArray(item) ? item : [item];
 
 /**
  * Configure the Echo instance with sensible defaults.
@@ -145,16 +170,6 @@ const resolveChannelSubscription = <T extends BroadcastDriver>(
 export const echo = <T extends BroadcastDriver>(): Echo<T> =>
     getEchoInstance<T>();
 
-type ModelName<T extends string> = T extends `${string}.${infer U}` ? U : never;
-
-type ModelEvents<T extends string> =
-    | `${ModelName<T>}Created`
-    | `${ModelName<T>}Updated`
-    | `${ModelName<T>}Deleted`;
-
-const toArray = <T>(item: T | T[]): T[] =>
-    Array.isArray(item) ? item : [item];
-
 export const useEchoModel = <T, M extends string>(
     model: M,
     identifier: string | number,
@@ -182,7 +197,7 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
     const subscription = useRef<Connection<K> | null>(null);
 
     const isPrivate = visibility === "private";
-    const events = Array.isArray(event) ? event : [event];
+    const events = toArray(event);
     const channel: Channel = {
         name: channelName,
         id: isPrivate ? `${visibility}-${channelName}` : channelName,
