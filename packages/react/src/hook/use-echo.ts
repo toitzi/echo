@@ -27,6 +27,10 @@ type ConfigDefaults<O extends BroadcastDriver> = Record<
     Broadcaster[O]["options"]
 >;
 
+type ModelPayload<T> = {
+    model: T;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type ModelName<T extends string> = T extends `${infer _}.${infer U}`
     ? ModelName<U>
@@ -309,10 +313,10 @@ export const useEchoModel = <T, M extends string>(
     model: M,
     identifier: string | number,
     event: ModelEvents<M> | ModelEvents<M>[],
-    callback: (payload: T) => void,
+    callback: (payload: ModelPayload<T>) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho(
+    return useEcho<ModelPayload<T>>(
         `${model}.${identifier}`,
         toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
         callback,
