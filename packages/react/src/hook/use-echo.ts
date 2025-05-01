@@ -147,7 +147,7 @@ export const echo = <T extends BroadcastDriver>(): Echo<T> =>
 
 type ModelName<T extends string> = T extends `${string}.${infer U}` ? U : never;
 
-type Events<T extends string> =
+type ModelEvents<T extends string> =
     | `${ModelName<T>}Created`
     | `${ModelName<T>}Updated`
     | `${ModelName<T>}Deleted`;
@@ -158,7 +158,7 @@ const toArray = <T>(item: T | T[]): T[] =>
 export const useEchoModel = <T, M extends string>(
     model: M,
     identifier: string | number,
-    event: Events<M> | Events<M>[],
+    event: ModelEvents<M> | ModelEvents<M>[],
     callback: (payload: T) => void,
     dependencies: any[] = [],
 ) => {
