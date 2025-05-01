@@ -1,6 +1,6 @@
 # Laravel Echo React Helpers
 
-## configureEcho
+## `configureEcho`
 
 You must call this function somewhere in your app _before_ you use `useEcho` in a component to configure your Echo instance. You only need to pass the required data:
 
@@ -27,7 +27,7 @@ In the above example, the configuration would also fill in the following keys if
 }
 ```
 
-## useEcho Hook
+## `useEcho` Hook
 
 Connect to private channel:
 
@@ -92,32 +92,15 @@ useEcho<OrderData>(`orders.${orderId}`, "OrderShipmentStatusUpdated", (e) => {
 Connect to public channel:
 
 ```ts
-useEcho(
-    "posts",
-    "PostPublished",
-    (e) => {
-        console.log(e.post);
-    },
-    [],
-    "public",
-);
+useEchoPublic("posts", "PostPublished", (e) => {
+    console.log(e.post);
+});
 ```
 
-Listener + subscribed:
+Connect to presence channel:
 
 ```ts
-useEcho(
-    "posts",
-    "PostPublished",
-    {
-        listen: (e) => {
-            console.log(e.post);
-        },
-        subscribed: () => {
-            console.log("subscribed!");
-        },
-    },
-    [],
-    "public",
-);
+useEchoPresence("posts", "PostPublished", (e) => {
+    console.log(e.post);
+});
 ```
