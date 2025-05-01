@@ -145,9 +145,7 @@ const resolveChannelSubscription = <T extends BroadcastDriver>(
 export const echo = <T extends BroadcastDriver>(): Echo<T> =>
     getEchoInstance<T>();
 
-type ModelName<T extends string> = T extends `App.Models.${infer U}`
-    ? U
-    : never;
+type ModelName<T extends string> = T extends `${string}.${infer U}` ? U : never;
 
 type Events<T extends string> =
     | `${ModelName<T>}Created`
