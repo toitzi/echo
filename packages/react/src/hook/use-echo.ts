@@ -145,6 +145,36 @@ const resolveChannelSubscription = <T extends BroadcastDriver>(
 export const echo = <T extends BroadcastDriver>(): Echo<T> =>
     getEchoInstance<T>();
 
+type ModelName<T extends string> = T extends `App.Models.${infer U}`
+    ? U
+    : never;
+
+type Events<T extends string> =
+    | `${ModelName<T>}Created`
+    | `${ModelName<T>}Updated`
+    | `${ModelName<T>}Deleted`;
+
+const toArray = <T>(item: T | T[]): T[] =>
+    Array.isArray(item) ? item : [item];
+
+export const useEchoModel = <T, M extends string>(
+    model: M,
+    identifier: string | number,
+    event: Events<M> | Events<M>[],
+    callback: (payload: T) => void,
+    dependencies: any[] = [],
+) => {
+    const events = toArray(event).map((e) => `.${e}`);
+
+    return useEcho(
+        `${model}.${identifier}`,
+        events,
+        callback,
+        dependencies,
+        "private",
+    );
+};
+
 export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
     channelName: string,
     event: string | string[],
@@ -163,10 +193,14 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
         private: isPrivate,
     };
 
-    const tearDown = useCallback((leaveAll: boolean = false) => {
+    const stopListening = () => {
         events.forEach((e) => {
             subscription.current!.stopListening(e, callbackFunc);
         });
+    };
+
+    const tearDown = useCallback((leaveAll: boolean = false) => {
+        stopListening();
 
         leaveChannel(channel, leaveAll);
     }, dependencies);
@@ -188,10 +222,18 @@ export const useEcho = <T, K extends BroadcastDriver = BroadcastDriver>(
     }, dependencies);
 
     return {
-        /** Leave channel */
+        /**
+         * Leave the channel
+         */
         leaveChannel: tearDown,
-        /** Leave a channel and also its associated private and presence channels */
+        /**
+         * Leave the channel and also its associated private and presence channels
+         */
         leave: () => tearDown(true),
+        /**
+         * Stop listening for an event without leaving the channel
+         */
+        stopListening,
     };
 };
 
