@@ -248,11 +248,14 @@ export const useEcho = <
         });
     };
 
-    const tearDown = (leaveAll: boolean = false) => {
+    const stopListening = () => {
         events.forEach((e) => {
             subscription!.stopListening(e, eventCallback.value);
         });
+    };
 
+    const tearDown = (leaveAll: boolean = false) => {
+        stopListening();
         leaveChannel(channel, leaveAll);
     };
 
@@ -266,6 +269,7 @@ export const useEcho = <
 
     if (dependencies.length > 0) {
         watch(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             () => dependencies,
             () => {
                 tearDown();
@@ -276,10 +280,22 @@ export const useEcho = <
     }
 
     return {
-        /** Leave channel */
+        /**
+         * Leave the channel
+         */
         leaveChannel: tearDown,
-        /** Leave a channel and also its associated private and presence channels */
+        /**
+         * Leave the channel and also its associated private and presence channels
+         */
         leave: () => tearDown(true),
+        /**
+         * Stop listening for an event without leaving the channel
+         */
+        stopListening,
+        /**
+         * Channel instance
+         */
+        channel: subscription! as ChannelReturnType<TDriver, TVisibility>,
     };
 };
 
@@ -319,14 +335,18 @@ export const useEchoPublic = <
     );
 };
 
-export const useEchoModel = <TPayload, TModel extends string>(
+export const useEchoModel = <
+    TPayload,
+    TModel extends string,
+    TDriver extends BroadcastDriver = BroadcastDriver,
+>(
     model: TModel,
     identifier: string | number,
     event: ModelEvents<TModel> | ModelEvents<TModel>[],
     callback: (payload: ModelPayload<TPayload>) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho<ModelPayload<TPayload>>(
+    return useEcho<ModelPayload<TPayload>, TDriver, "private">(
         `${model}.${identifier}`,
         toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
         callback,
