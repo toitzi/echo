@@ -1,5 +1,5 @@
 {
-    "name": "laravel-echo-vue",
+    "name": "@laravel/echo-vue",
     "version": "2.0.2",
     "description": "Laravel Echo library for beautiful Pusher and Socket.IO integration",
     "keywords": [
