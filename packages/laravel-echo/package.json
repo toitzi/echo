@@ -23,8 +23,8 @@
     "scripts": {
         "build": "vite build && FORMAT=iife vite build",
         "lint": "eslint --config eslint.config.mjs",
-        "prepublish": "npm run build",
-        "release": "npm run test && standard-version && git push --follow-tags && npm publish",
+        "prepublish": "pnpm run build",
+        "release": "pnpm run test && standard-version && git push --follow-tags && pnpm publish",
         "test": "vitest",
         "format": "prettier --write ."
     },
