@@ -34,3 +34,11 @@ To run tests for an individual package:
 cd packages/react
 pnpm run test
 ```
+
+## Publishing
+
+This section is really for the benefit of the core maintainers. From the root directory:
+
+```bash
+./release
+```
