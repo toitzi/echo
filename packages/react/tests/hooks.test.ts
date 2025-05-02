@@ -1,6 +1,6 @@
 import { renderHook } from "@testing-library/react";
 import Echo from "laravel-echo";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const getEchoModule = async () => import("../src/hook/use-echo");
 

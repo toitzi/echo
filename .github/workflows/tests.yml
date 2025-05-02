@@ -25,11 +25,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build
+        run: pnpm build
+
       #   - name: ESLint
       #     run: pnpm run lint
 
       - name: Execute tests
         run: pnpm test
-
-      - name: Run build
-        run: pnpm run build
