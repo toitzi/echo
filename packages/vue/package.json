@@ -23,7 +23,7 @@
     "types": "dist/echo.d.ts",
     "scripts": {
         "build": "vite build && FORMAT=iife vite build",
-        "lint": "eslint --config eslint.config.mjs",
+        "lint": "eslint --config eslint.config.mjs \"src/**/*.ts\"",
         "prepublish": "pnpm run build",
         "release": "pnpm run test && git push --follow-tags && pnpm publish",
         "test": "vitest",

@@ -1,9 +1,10 @@
-import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 
 const config = [
     {
-        files: ["typings/**/*.ts", "src/**/*.ts"],
+        ignores: ["dist/**/*"],
+        files: ["src/**/*.ts"],
         languageOptions: {
             parser: tsParser, // Use the imported parser object
             parserOptions: {

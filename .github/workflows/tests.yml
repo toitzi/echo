@@ -28,8 +28,8 @@ jobs:
       - name: Build
         run: pnpm build
 
-      #   - name: ESLint
-      #     run: pnpm run lint
+      - name: ESLint
+        run: pnpm run lint
 
       - name: Execute tests
         run: pnpm test
