@@ -8,7 +8,8 @@ import { onMounted, onUnmounted, ref, watch } from "vue";
 
 type Connection<T extends BroadcastDriver> =
     | Broadcaster[T]["public"]
-    | Broadcaster[T]["private"];
+    | Broadcaster[T]["private"]
+    | Broadcaster[T]["presence"];
 
 type ChannelData<T extends BroadcastDriver> = {
     count: number;
