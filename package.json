@@ -9,7 +9,7 @@
     "author": {
         "name": "Taylor Otwell"
     },
-    "script": {
+    "scripts": {
         "test": "pnpm -r --if-present run test",
         "build": "pnpm -r --if-present run build",
         "lint": "pnpm -r --if-present run lint",
