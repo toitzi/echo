@@ -50,16 +50,18 @@ echo "Starting package version management..."
 # Get root package version
 root_package_json="packages/laravel-echo/package.json"
 current_version=$(get_current_version "$root_package_json")
+echo ""
 echo "Current version: $current_version"
+echo ""
 
 # Get version type once
 read -p "Update version? (patch/minor/major): " version_type
+echo ""
 
 # Iterate through packages directory
 for package_dir in packages/*; do
     if [ -d "$package_dir" ]; then
-        package_name=$(get_package_name "$package_dir/package.json")
-        echo "Package: $package_name"
+        echo "Updating version for $package_dir"
 
         cd $package_dir
 
@@ -75,16 +77,19 @@ done
 # Get new version from root package
 new_version=$(get_current_version "$root_package_json")
 
-# Create single git tag
-echo "Creating git tag: v$new_version"
-# git tag "v$new_version"
-
 # Install dependencies
+echo "Updating lock file..."
 pnpm i
 
-# Run release script
+# Create single git tag
+echo ""
+echo "Creating git tag: v$new_version"
+git tag "v$new_version"
+echo ""
+
 echo "Running release process..."
-# pnpm -r run release
+echo ""
+pnpm -r run release
 
 # Echo joke
 echo "Released! (Released!) (Released!)"
