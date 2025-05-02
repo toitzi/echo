@@ -8,7 +8,7 @@
         "ably",
         "vue"
     ],
-    "homepage": "https://github.com/laravel/echo",
+    "homepage": "https://github.com/laravel/echo/tree/2.x/packages/vue",
     "repository": {
         "type": "git",
         "url": "https://github.com/laravel/echo"
