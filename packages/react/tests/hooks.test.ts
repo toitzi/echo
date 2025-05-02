@@ -249,3 +249,218 @@ describe("useEcho hook", async () => {
         expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
     });
 });
+
+describe("useEchoModel hook", async () => {
+    let echoModule: typeof import("../src/hook/use-echo");
+    let echoInstance: Echo<"null">;
+
+    beforeEach(async () => {
+        vi.resetModules();
+
+        echoInstance = new Echo({
+            broadcaster: "null",
+        });
+
+        echoModule = await getEchoModule();
+
+        echoModule.configureEcho({
+            broadcaster: "null",
+        });
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("subscribes to model channel and listens for model events", async () => {
+        const mockCallback = vi.fn();
+        const model = "App.Models.User";
+        const identifier = "123";
+        const event = "UserCreated";
+
+        const { result } = renderHook(() =>
+            echoModule.useEchoModel<any, typeof model>(
+                model,
+                identifier,
+                event,
+                mockCallback,
+            ),
+        );
+
+        expect(result.current).toHaveProperty("leaveChannel");
+        expect(typeof result.current.leave).toBe("function");
+        expect(result.current).toHaveProperty("leave");
+        expect(typeof result.current.leaveChannel).toBe("function");
+    });
+
+    it("handles multiple model events", async () => {
+        const mockCallback = vi.fn();
+        const model = "App.Models.User";
+        const identifier = "123";
+        const events = ["UserCreated", "UserUpdated"];
+
+        const { result, unmount } = renderHook(() =>
+            echoModule.useEchoModel<any, typeof model>(
+                model,
+                identifier,
+                ["UserCreated", "UserUpdated"],
+                mockCallback,
+            ),
+        );
+
+        expect(result.current).toHaveProperty("leaveChannel");
+
+        const expectedChannelName = `${model}.${identifier}`;
+        expect(echoInstance.private).toHaveBeenCalledWith(expectedChannelName);
+
+        const channel = echoInstance.private(expectedChannelName);
+
+        expect(channel.listen).toHaveBeenCalledWith(
+            `.${events[0]}`,
+            mockCallback,
+        );
+        expect(channel.listen).toHaveBeenCalledWith(
+            `.${events[1]}`,
+            mockCallback,
+        );
+
+        expect(() => unmount()).not.toThrow();
+
+        expect(channel.stopListening).toHaveBeenCalledWith(
+            `.${events[0]}`,
+            mockCallback,
+        );
+        expect(channel.stopListening).toHaveBeenCalledWith(
+            `.${events[1]}`,
+            mockCallback,
+        );
+    });
+
+    it("cleans up subscriptions on unmount", async () => {
+        const mockCallback = vi.fn();
+        const model = "App.Models.User";
+        const identifier = "123";
+        const event = "UserCreated";
+
+        const { unmount } = renderHook(() =>
+            echoModule.useEchoModel<any, typeof model>(
+                model,
+                identifier,
+                event,
+                mockCallback,
+            ),
+        );
+
+        const expectedChannelName = `${model}.${identifier}`;
+        expect(echoInstance.private).toHaveBeenCalledWith(expectedChannelName);
+
+        expect(() => unmount()).not.toThrow();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
+            `private-${expectedChannelName}`,
+        );
+    });
+
+    it("won't subscribe multiple times to the same model channel", async () => {
+        const mockCallback = vi.fn();
+        const model = "App.Models.User";
+        const identifier = "123";
+        const event = "UserCreated";
+
+        const { unmount: unmount1 } = renderHook(() =>
+            echoModule.useEchoModel<any, typeof model>(
+                model,
+                identifier,
+                event,
+                mockCallback,
+            ),
+        );
+
+        const { unmount: unmount2 } = renderHook(() =>
+            echoModule.useEchoModel<any, typeof model>(
+                model,
+                identifier,
+                event,
+                mockCallback,
+            ),
+        );
+
+        const expectedChannelName = `${model}.${identifier}`;
+        expect(echoInstance.private).toHaveBeenCalledTimes(1);
+        expect(echoInstance.private).toHaveBeenCalledWith(expectedChannelName);
+
+        expect(() => unmount1()).not.toThrow();
+        expect(echoInstance.leaveChannel).not.toHaveBeenCalled();
+
+        expect(() => unmount2()).not.toThrow();
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
+            `private-${expectedChannelName}`,
+        );
+    });
+
+    it("can leave a model channel", async () => {
+        const mockCallback = vi.fn();
+        const model = "App.Models.User";
+        const identifier = "123";
+        const event = "UserCreated";
+
+        const { result } = renderHook(() =>
+            echoModule.useEchoModel<any, typeof model>(
+                model,
+                identifier,
+                event,
+                mockCallback,
+            ),
+        );
+
+        result.current.leaveChannel();
+
+        const expectedChannelName = `${model}.${identifier}`;
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
+            `private-${expectedChannelName}`,
+        );
+    });
+
+    it("can leave all model channel variations", async () => {
+        const mockCallback = vi.fn();
+        const model = "App.Models.User";
+        const identifier = "123";
+        const event = "UserCreated";
+
+        const { result } = renderHook(() =>
+            echoModule.useEchoModel<any, typeof model>(
+                model,
+                identifier,
+                event,
+                mockCallback,
+            ),
+        );
+
+        result.current.leave();
+
+        const expectedChannelName = `${model}.${identifier}`;
+        expect(echoInstance.leave).toHaveBeenCalledWith(expectedChannelName);
+    });
+
+    it("handles model events with dots in the name", async () => {
+        const mockCallback = vi.fn();
+        const model = "App.Models.User.Profile";
+        const identifier = "123";
+        const event = "ProfileCreated";
+
+        const { result } = renderHook(() =>
+            echoModule.useEchoModel<any, typeof model>(
+                model,
+                identifier,
+                event,
+                mockCallback,
+            ),
+        );
+
+        const expectedChannelName = `${model}.${identifier}`;
+        expect(echoInstance.private).toHaveBeenCalledWith(expectedChannelName);
+
+        const channel = echoInstance.private(expectedChannelName);
+        expect(channel.listen).toHaveBeenCalledWith(`.${event}`, mockCallback);
+    });
+});
