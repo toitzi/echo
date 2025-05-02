@@ -1,4 +1,5 @@
 import type { Socket } from "socket.io-client";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SocketIoChannel } from "../../src/channel";
 import { Connector } from "../../src/connector";
 
@@ -31,9 +32,9 @@ describe("SocketIoChannel", () => {
     });
 
     test("triggers all listeners for an event", () => {
-        const l1 = jest.fn();
-        const l2 = jest.fn();
-        const l3 = jest.fn();
+        const l1 = vi.fn();
+        const l2 = vi.fn();
+        const l3 = vi.fn();
         channel.listen("MyEvent", l1);
         channel.listen("MyEvent", l2);
         channel.listen("MyOtherEvent", l3);
@@ -50,9 +51,9 @@ describe("SocketIoChannel", () => {
     });
 
     test("can remove a listener for an event", () => {
-        const l1 = jest.fn();
-        const l2 = jest.fn();
-        const l3 = jest.fn();
+        const l1 = vi.fn();
+        const l2 = vi.fn();
+        const l3 = vi.fn();
         channel.listen("MyEvent", l1);
         channel.listen("MyEvent", l2);
         channel.listen("MyOtherEvent", l3);
@@ -71,9 +72,9 @@ describe("SocketIoChannel", () => {
     });
 
     test("can remove all listeners for an event", () => {
-        const l1 = jest.fn();
-        const l2 = jest.fn();
-        const l3 = jest.fn();
+        const l1 = vi.fn();
+        const l2 = vi.fn();
+        const l3 = vi.fn();
         channel.listen("MyEvent", l1);
         channel.listen("MyEvent", l2);
         channel.listen("MyOtherEvent", l3);

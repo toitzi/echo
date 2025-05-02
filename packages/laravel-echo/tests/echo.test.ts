@@ -1,3 +1,4 @@
+import { describe, expect, test } from "vitest";
 import { NullConnector } from "../src/connector";
 import Echo from "../src/echo";
 
