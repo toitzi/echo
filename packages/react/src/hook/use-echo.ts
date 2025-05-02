@@ -276,10 +276,8 @@ export const useEcho = <
         /**
          * Channel instance
          */
-        channel: subscription.current as ChannelReturnType<
-            TDriver,
-            TVisibility
-        >,
+        channel: () =>
+            subscription.current as ChannelReturnType<TDriver, TVisibility>,
     };
 };
 
