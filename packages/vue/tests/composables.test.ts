@@ -2,7 +2,12 @@ import { mount } from "@vue/test-utils";
 import Echo from "laravel-echo";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent } from "vue";
-import { configureEcho, useEcho } from "../src/composable/useEcho";
+import {
+    configureEcho,
+    useEcho,
+    useEchoPresence,
+    useEchoPublic,
+} from "../src/composable/useEcho";
 
 const getEchoModule = async () => import("../src/composable/useEcho");
 
@@ -53,6 +58,50 @@ const getTestComponent = (
     return mount(TestComponent);
 };
 
+const getPublicTestComponent = (
+    channelName: string,
+    event: string | string[],
+    callback: (data: any) => void,
+    dependencies: any[] = [],
+) => {
+    const TestComponent = defineComponent({
+        setup() {
+            configureEcho({
+                broadcaster: "null",
+            });
+
+            return {
+                ...useEchoPublic(channelName, event, callback, dependencies),
+            };
+        },
+        template: "<div></div>",
+    });
+
+    return mount(TestComponent);
+};
+
+const getPresenceTestComponent = (
+    channelName: string,
+    event: string | string[],
+    callback: (data: any) => void,
+    dependencies: any[] = [],
+) => {
+    const TestComponent = defineComponent({
+        setup() {
+            configureEcho({
+                broadcaster: "null",
+            });
+
+            return {
+                ...useEchoPresence(channelName, event, callback, dependencies),
+            };
+        },
+        template: "<div></div>",
+    });
+
+    return mount(TestComponent);
+};
+
 vi.mock("laravel-echo", () => {
     const mockPrivateChannel = {
         leaveChannel: vi.fn(),
@@ -66,16 +115,26 @@ vi.mock("laravel-echo", () => {
         stopListening: vi.fn(),
     };
 
+    const mockPresenceChannel = {
+        leaveChannel: vi.fn(),
+        listen: vi.fn(),
+        stopListening: vi.fn(),
+        here: vi.fn(),
+        joining: vi.fn(),
+        leaving: vi.fn(),
+        whisper: vi.fn(),
+    };
+
     const Echo = vi.fn();
 
     Echo.prototype.private = vi.fn(() => mockPrivateChannel);
     Echo.prototype.channel = vi.fn(() => mockPublicChannel);
     Echo.prototype.encryptedPrivate = vi.fn();
-    Echo.prototype.presence = vi.fn();
     Echo.prototype.listen = vi.fn();
     Echo.prototype.leave = vi.fn();
     Echo.prototype.leaveChannel = vi.fn();
     Echo.prototype.leaveAllChannels = vi.fn();
+    Echo.prototype.join = vi.fn(() => mockPresenceChannel);
 
     return { default: Echo };
 });
@@ -284,5 +343,262 @@ describe("useEcho hook", async () => {
         wrapper.vm.leaveChannel();
 
         expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
+    });
+});
+
+describe("useEchoPublic hook", async () => {
+    let echoInstance: Echo<"null">;
+    let wrapper: ReturnType<typeof getPublicTestComponent>;
+
+    beforeEach(async () => {
+        vi.resetModules();
+
+        echoInstance = new Echo({
+            broadcaster: "null",
+        });
+    });
+
+    afterEach(() => {
+        wrapper.unmount();
+        vi.clearAllMocks();
+    });
+
+    it("subscribes to a public channel and listens for events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPublicTestComponent(channelName, event, mockCallback);
+
+        expect(wrapper.vm).toHaveProperty("leaveChannel");
+        expect(typeof wrapper.vm.leaveChannel).toBe("function");
+
+        expect(wrapper.vm).toHaveProperty("leave");
+        expect(typeof wrapper.vm.leave).toBe("function");
+    });
+
+    it("handles multiple events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const events = ["event1", "event2"];
+
+        wrapper = getPublicTestComponent(channelName, events, mockCallback);
+
+        expect(wrapper.vm).toHaveProperty("leaveChannel");
+        expect(typeof wrapper.vm.leaveChannel).toBe("function");
+
+        expect(echoInstance.channel).toHaveBeenCalledWith(channelName);
+
+        const channel = echoInstance.channel(channelName);
+
+        expect(channel.listen).toHaveBeenCalledWith(events[0], mockCallback);
+        expect(channel.listen).toHaveBeenCalledWith(events[1], mockCallback);
+
+        wrapper.unmount();
+
+        expect(channel.stopListening).toHaveBeenCalledWith(
+            events[0],
+            mockCallback,
+        );
+        expect(channel.stopListening).toHaveBeenCalledWith(
+            events[1],
+            mockCallback,
+        );
+    });
+
+    it("cleans up subscriptions on unmount", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPublicTestComponent(channelName, event, mockCallback);
+
+        expect(echoInstance.channel).toHaveBeenCalledWith(channelName);
+
+        wrapper.unmount();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
+    });
+
+    it("won't subscribe multiple times to the same channel", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPublicTestComponent(channelName, event, mockCallback);
+
+        const wrapper2 = getPublicTestComponent(
+            channelName,
+            event,
+            mockCallback,
+        );
+
+        expect(echoInstance.channel).toHaveBeenCalledTimes(1);
+        expect(echoInstance.channel).toHaveBeenCalledWith(channelName);
+
+        wrapper.unmount();
+        expect(echoInstance.leaveChannel).not.toHaveBeenCalled();
+
+        wrapper2.unmount();
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
+    });
+
+    it("can leave a channel", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPublicTestComponent(channelName, event, mockCallback);
+
+        wrapper.vm.leaveChannel();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
+    });
+
+    it("can leave all channel variations", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPublicTestComponent(channelName, event, mockCallback);
+
+        wrapper.vm.leave();
+
+        expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
+    });
+});
+
+describe("useEchoPresence hook", async () => {
+    let echoInstance: Echo<"null">;
+    let wrapper: ReturnType<typeof getPresenceTestComponent>;
+
+    beforeEach(async () => {
+        vi.resetModules();
+
+        echoInstance = new Echo({
+            broadcaster: "null",
+        });
+    });
+
+    afterEach(() => {
+        wrapper.unmount();
+        vi.clearAllMocks();
+    });
+
+    it("subscribes to a presence channel and listens for events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPresenceTestComponent(channelName, event, mockCallback);
+
+        expect(wrapper.vm).toHaveProperty("leaveChannel");
+        expect(typeof wrapper.vm.leaveChannel).toBe("function");
+
+        expect(wrapper.vm).toHaveProperty("leave");
+        expect(typeof wrapper.vm.leave).toBe("function");
+
+        expect(wrapper.vm).toHaveProperty("channel");
+        expect(wrapper.vm.channel).not.toBeNull();
+        expect(typeof wrapper.vm.channel().here).toBe("function");
+        expect(typeof wrapper.vm.channel().joining).toBe("function");
+        expect(typeof wrapper.vm.channel().leaving).toBe("function");
+        expect(typeof wrapper.vm.channel().whisper).toBe("function");
+    });
+
+    it("handles multiple events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const events = ["event1", "event2"];
+
+        wrapper = getPresenceTestComponent(channelName, events, mockCallback);
+
+        expect(wrapper.vm).toHaveProperty("leaveChannel");
+        expect(typeof wrapper.vm.leaveChannel).toBe("function");
+
+        expect(echoInstance.join).toHaveBeenCalledWith(channelName);
+
+        const channel = echoInstance.join(channelName);
+
+        expect(channel.listen).toHaveBeenCalledWith(events[0], mockCallback);
+        expect(channel.listen).toHaveBeenCalledWith(events[1], mockCallback);
+
+        wrapper.unmount();
+
+        expect(channel.stopListening).toHaveBeenCalledWith(
+            events[0],
+            mockCallback,
+        );
+        expect(channel.stopListening).toHaveBeenCalledWith(
+            events[1],
+            mockCallback,
+        );
+    });
+
+    it("cleans up subscriptions on unmount", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPresenceTestComponent(channelName, event, mockCallback);
+
+        expect(echoInstance.join).toHaveBeenCalledWith(channelName);
+
+        wrapper.unmount();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
+            `presence-${channelName}`,
+        );
+    });
+
+    it("won't subscribe multiple times to the same channel", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPresenceTestComponent(channelName, event, mockCallback);
+
+        const wrapper2 = getPresenceTestComponent(
+            channelName,
+            event,
+            mockCallback,
+        );
+
+        expect(echoInstance.join).toHaveBeenCalledTimes(1);
+        expect(echoInstance.join).toHaveBeenCalledWith(channelName);
+
+        wrapper.unmount();
+        expect(echoInstance.leaveChannel).not.toHaveBeenCalled();
+
+        wrapper2.unmount();
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
+            `presence-${channelName}`,
+        );
+    });
+
+    it("can leave a channel", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPresenceTestComponent(channelName, event, mockCallback);
+
+        wrapper.vm.leaveChannel();
+
+        expect(echoInstance.leaveChannel).toHaveBeenCalledWith(
+            `presence-${channelName}`,
+        );
+    });
+
+    it("can leave all channel variations", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getPresenceTestComponent(channelName, event, mockCallback);
+
+        wrapper.vm.leave();
+
+        expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
     });
 });

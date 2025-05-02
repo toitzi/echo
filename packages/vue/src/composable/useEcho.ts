@@ -229,10 +229,11 @@ export const useEcho = <
 
     let subscription: Connection<TDriver> | null = null;
     const events = Array.isArray(event) ? event : [event];
-    const isPrivate = visibility === "private";
     const channel: Channel = {
         name: channelName,
-        id: isPrivate ? `${visibility}-${channelName}` : channelName,
+        id: ["private", "presence"].includes(visibility)
+            ? `${visibility}-${channelName}`
+            : channelName,
         visibility,
     };
 
@@ -295,7 +296,7 @@ export const useEcho = <
         /**
          * Channel instance
          */
-        channel: subscription! as ChannelReturnType<TDriver, TVisibility>,
+        channel: () => subscription! as ChannelReturnType<TDriver, TVisibility>,
     };
 };
 
