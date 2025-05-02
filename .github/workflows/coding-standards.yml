@@ -1,4 +1,4 @@
-name: tests
+name: fix code styling
 
 on:
   push:
@@ -6,11 +6,9 @@ on:
       - master
       - "*.x"
   pull_request:
-  schedule:
-    - cron: "0 0 * * *"
 
 jobs:
-  tests:
+  format:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,11 +23,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build
-        run: pnpm build
+      - name: Format code
+        run: pnpm run format
 
-      - name: ESLint
-        run: pnpm run lint
-
-      - name: Execute tests
-        run: pnpm test
+      - name: Commit linted files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Fix code styling"
