@@ -43,7 +43,7 @@ export const configureEcho = <T extends BroadcastDriver>(
             enabledTransports: ["ws", "wss"],
         },
         pusher: {
-            broadcaster: "reverb",
+            broadcaster: "pusher",
             key: import.meta.env.VITE_PUSHER_APP_KEY,
             cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
             forceTLS: true,
