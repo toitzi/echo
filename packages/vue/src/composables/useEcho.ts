@@ -86,6 +86,7 @@ export const useEcho = <
     visibility: TVisibility = "private" as TVisibility,
 ) => {
     const eventCallback = ref(callback);
+    const listening = ref(false);
 
     watch(
         () => callback,
@@ -111,15 +112,31 @@ export const useEcho = <
             return;
         }
 
+        listen();
+    };
+
+    const listen = () => {
+        if (listening.value) {
+            return;
+        }
+
         events.forEach((e) => {
             subscription!.listen(e, eventCallback.value);
         });
+
+        listening.value = true;
     };
 
     const stopListening = () => {
+        if (!listening.value) {
+            return;
+        }
+
         events.forEach((e) => {
             subscription!.stopListening(e, eventCallback.value);
         });
+
+        listening.value = false;
     };
 
     const tearDown = (leaveAll: boolean = false) => {
@@ -157,9 +174,13 @@ export const useEcho = <
          */
         leave: () => tearDown(true),
         /**
-         * Stop listening for an event without leaving the channel
+         * Stop listening for event(s) without leaving the channel
          */
         stopListening,
+        /**
+         * Listen for event(s)
+         */
+        listen,
         /**
          * Channel instance
          */
