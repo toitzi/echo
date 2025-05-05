@@ -6,6 +6,7 @@ import type {
     ChannelData,
     ChannelReturnType,
     Connection,
+    ModelEvents,
     ModelPayload,
 } from "../types";
 import { toArray } from "../util";
@@ -240,7 +241,7 @@ export const useEchoModel = <
     TPayload,
     TModel extends string,
     TDriver extends BroadcastDriver = BroadcastDriver,
-    TEvent extends string = string,
+    TEvent extends ModelEvents<TModel> = ModelEvents<TModel>,
 >(
     model: TModel,
     identifier: string | number,

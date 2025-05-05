@@ -78,14 +78,29 @@ export const useEcho = <
     TPayload,
     TDriver extends BroadcastDriver = BroadcastDriver,
     TVisibility extends Channel["visibility"] = "private",
+    TEvent extends string = string,
 >(
     channelName: string,
-    event: string | string[],
-    callback: (payload: TPayload) => void,
+    event: TEvent | TEvent[],
+    callback: (payload: TPayload, eventName: TEvent) => void,
     dependencies: any[] = [],
     visibility: TVisibility = "private" as TVisibility,
 ) => {
-    const eventCallback = ref(callback);
+    const events = toArray(event);
+    const eventCallback = ref<
+        Record<TEvent, (payload: TPayload, eventName: TEvent) => void>
+    >(
+        events.reduce(
+            (acc, e) => {
+                acc[e] = (payload: TPayload) => callback(payload, e);
+                return acc;
+            },
+            {} as Record<
+                TEvent,
+                (payload: TPayload, eventName: TEvent) => void
+            >,
+        ),
+    );
     const listening = ref(false);
 
     watch(
@@ -96,7 +111,7 @@ export const useEcho = <
     );
 
     let subscription: Connection<TDriver> | null = null;
-    const events = Array.isArray(event) ? event : [event];
+
     const channel: Channel = {
         name: channelName,
         id: ["private", "presence"].includes(visibility)
@@ -121,7 +136,11 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription!.listen(e, eventCallback.value);
+            if (e !== "*") {
+                subscription!.listen(e, eventCallback.value[e]);
+            } else if ("listenToAll" in subscription!) {
+                subscription.listenToAll(eventCallback.value[e]);
+            }
         });
 
         listening.value = true;
@@ -133,7 +152,11 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription!.stopListening(e, eventCallback.value);
+            if (e !== "*") {
+                subscription!.stopListening(e, eventCallback.value[e]);
+            } else if ("stopListeningToAll" in subscription!) {
+                subscription.stopListeningToAll(eventCallback.value[e]);
+            }
         });
 
         listening.value = false;
@@ -191,10 +214,11 @@ export const useEcho = <
 export const useEchoPresence = <
     TPayload,
     TDriver extends BroadcastDriver = BroadcastDriver,
+    TEvent extends string = string,
 >(
     channelName: string,
-    event: string | string[],
-    callback: (payload: TPayload) => void,
+    event: TEvent | TEvent[],
+    callback: (payload: TPayload, eventName: TEvent) => void,
     dependencies: any[] = [],
 ) => {
     return useEcho<TPayload, TDriver, "presence">(
@@ -209,10 +233,11 @@ export const useEchoPresence = <
 export const useEchoPublic = <
     TPayload,
     TDriver extends BroadcastDriver = BroadcastDriver,
+    TEvent extends string = string,
 >(
     channelName: string,
-    event: string | string[],
-    callback: (payload: TPayload) => void,
+    event: TEvent | TEvent[],
+    callback: (payload: TPayload, eventName: TEvent) => void,
     dependencies: any[] = [],
 ) => {
     return useEcho<TPayload, TDriver, "public">(
@@ -228,16 +253,19 @@ export const useEchoModel = <
     TPayload,
     TModel extends string,
     TDriver extends BroadcastDriver = BroadcastDriver,
+    TEvent extends ModelEvents<TModel> = ModelEvents<TModel>,
 >(
     model: TModel,
     identifier: string | number,
-    event: ModelEvents<TModel> | ModelEvents<TModel>[],
-    callback: (payload: ModelPayload<TPayload>) => void,
+    event: TEvent | TEvent[],
+    callback: (payload: ModelPayload<TPayload>, eventName: TEvent) => void,
     dependencies: any[] = [],
 ) => {
     return useEcho<ModelPayload<TPayload>, TDriver, "private">(
         `${model}.${identifier}`,
-        toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
+        toArray(event).map((e) =>
+            e.startsWith(".") ? e : `.${e}`,
+        ) as TEvent[],
         callback,
         dependencies,
         "private",
