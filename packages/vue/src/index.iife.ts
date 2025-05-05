@@ -1,1 +1,7 @@
-export { configureEcho, echo, useEcho } from "./composables/useEcho";
+export {
+    useEcho,
+    useEchoModel,
+    useEchoPresence,
+    useEchoPublic,
+} from "./composables/useEcho";
+export { configureEcho, echo } from "./config/index";

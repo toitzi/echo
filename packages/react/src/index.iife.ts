@@ -1,1 +1,7 @@
-export { configureEcho, echo, useEcho } from "./hooks/use-echo";
+export { configureEcho, echo } from "./config/index";
+export {
+    useEcho,
+    useEchoModel,
+    useEchoPresence,
+    useEchoPublic,
+} from "./hooks/use-echo";
