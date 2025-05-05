@@ -18,9 +18,9 @@
         "name": "Taylor Otwell"
     },
     "type": "module",
-    "main": "dist/echo.common.js",
-    "module": "dist/echo.js",
-    "types": "dist/echo.d.ts",
+    "main": "dist/index.common.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "build": "vite build && FORMAT=iife vite build",
         "lint": "eslint --config eslint.config.mjs \"src/**/*.ts\"",

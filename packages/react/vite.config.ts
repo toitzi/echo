@@ -34,7 +34,13 @@ const config: UserConfig = (() => {
     }
 
     return {
-        plugins: [dts()],
+        plugins: [
+            dts({
+                insertTypesEntry: true,
+                rollupTypes: true,
+                include: ["src/**/*.ts"],
+            }),
+        ],
         build: {
             lib: {
                 entry: resolve(__dirname, "src/index.ts"),

@@ -65,9 +65,9 @@
     },
     "exports": {
         ".": {
+            "types": "./dist/echo.d.ts",
             "import": "./dist/echo.js",
-            "require": "./dist/echo.common.js",
-            "types": "./dist/echo.d.ts"
+            "require": "./dist/echo.common.js"
         },
         "./iife": "./dist/echo.iife.js"
     },
