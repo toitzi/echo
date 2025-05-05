@@ -221,7 +221,7 @@ export const useEchoPresence = <
     callback: (payload: TPayload, eventName: TEvent) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho<TPayload, TDriver, "presence">(
+    return useEcho<TPayload, TDriver, "presence", TEvent>(
         channelName,
         event,
         callback,
@@ -240,7 +240,7 @@ export const useEchoPublic = <
     callback: (payload: TPayload, eventName: TEvent) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho<TPayload, TDriver, "public">(
+    return useEcho<TPayload, TDriver, "public", TEvent>(
         channelName,
         event,
         callback,
@@ -261,7 +261,7 @@ export const useEchoModel = <
     callback: (payload: ModelPayload<TPayload>, eventName: TEvent) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho<ModelPayload<TPayload>, TDriver, "private">(
+    return useEcho<ModelPayload<TPayload>, TDriver, "private", TEvent>(
         `${model}.${identifier}`,
         toArray(event).map((e) =>
             e.startsWith(".") ? e : `.${e}`,
