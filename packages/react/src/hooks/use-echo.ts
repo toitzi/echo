@@ -250,7 +250,9 @@ export const useEchoModel = <
 ) => {
     return useEcho<ModelPayload<TPayload>, TDriver, "private", TEvent>(
         `${model}.${identifier}`,
-        toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
+        toArray(event).map((e) =>
+            e.startsWith(".") ? e : `.${e}`,
+        ) as TEvent[],
         callback,
         dependencies,
         "private",
