@@ -23,6 +23,9 @@ export type ConfigDefaults<O extends BroadcastDriver> = Record<
 
 export type ModelPayload<T> = {
     model: T;
+    connection: string | null;
+    queue: string | null;
+    afterCommit: boolean;
 };
 
 export type ChannelReturnType<
