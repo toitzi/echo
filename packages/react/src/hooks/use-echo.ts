@@ -81,11 +81,17 @@ export const useEcho = <
 >(
     channelName: string,
     event: string | string[],
-    callback: (payload: TPayload) => void,
+    callback: (payload: TPayload, eventName: string) => void,
     dependencies: any[] = [],
     visibility: TVisibility = "private" as TVisibility,
 ) => {
-    const callbackFunc = useCallback(callback, dependencies);
+    const callbacks = useRef<
+        Record<string, (payload: TPayload, eventName: string) => void>
+    >({});
+    const allCallbackFunc = useCallback(
+        (eventName: string, payload: TPayload) => callback(payload, eventName),
+        dependencies,
+    );
     const subscription = useRef<Connection<TDriver> | null>(null);
     const listening = useRef(false);
 
@@ -104,7 +110,11 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription.current!.stopListening(e, callbackFunc);
+            if (e !== "*") {
+                subscription.current!.stopListening(e, callbacks.current[e]);
+            } else if ("stopListeningToAll" in subscription.current!) {
+                subscription.current.stopListeningToAll(allCallbackFunc);
+            }
         });
 
         listening.current = false;
@@ -116,7 +126,20 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription.current!.listen(e, callbackFunc);
+            if (e !== "*") {
+                const cb =
+                    callbacks.current[e] ??
+                    ((payload: TPayload) => callback(payload, e));
+
+                subscription.current!.listen(e, cb);
+            } else if ("listenToAll" in subscription.current!) {
+                subscription.current.listenToAll(allCallbackFunc);
+            } else {
+                // eslint-disable-next-line no-console
+                console.warn(
+                    "listenToAll is not supported for this channel type",
+                );
+            }
         });
 
         listening.current = true;
