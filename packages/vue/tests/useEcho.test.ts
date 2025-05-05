@@ -3,13 +3,11 @@ import Echo from "laravel-echo";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent } from "vue";
 import {
-    configureEcho,
     useEcho,
     useEchoPresence,
     useEchoPublic,
-} from "../src/composable/useEcho";
-
-const getEchoModule = async () => import("../src/composable/useEcho");
+} from "../src/composables/useEcho";
+import { configureEcho } from "../src/config/index";
 
 const getUnConfiguredTestComponent = (
     channelName: string,
@@ -137,32 +135,6 @@ vi.mock("laravel-echo", () => {
     Echo.prototype.join = vi.fn(() => mockPresenceChannel);
 
     return { default: Echo };
-});
-
-describe("echo helper", async () => {
-    beforeEach(() => {
-        vi.resetModules();
-    });
-
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
-    it("throws error when Echo is not configured", async () => {
-        const echoModule = await getEchoModule();
-
-        expect(() => echoModule.echo()).toThrow("Echo has not been configured");
-    });
-
-    it("creates Echo instance with proper configuration", async () => {
-        const echoModule = await getEchoModule();
-
-        echoModule.configureEcho({
-            broadcaster: "null",
-        });
-
-        expect(echoModule.echo()).toBeDefined();
-    });
 });
 
 describe("without echo configured", async () => {
@@ -343,6 +315,106 @@ describe("useEcho hook", async () => {
         wrapper.vm.leaveChannel();
 
         expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
+    });
+
+    it("listen method adds event listeners", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getTestComponent(channelName, event, mockCallback);
+        const mockChannel = echoInstance.private(channelName);
+
+        expect(mockChannel.listen).toHaveBeenCalledWith(event, mockCallback);
+
+        wrapper.vm.stopListening();
+
+        expect(mockChannel.stopListening).toHaveBeenCalledWith(
+            event,
+            mockCallback,
+        );
+
+        wrapper.vm.listen();
+
+        expect(mockChannel.listen).toHaveBeenCalledWith(event, mockCallback);
+    });
+
+    it("listen method is a no-op when already listening", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getTestComponent(channelName, event, mockCallback);
+        const mockChannel = echoInstance.private(channelName);
+
+        wrapper.vm.listen();
+
+        expect(mockChannel.listen).toHaveBeenCalledTimes(1);
+    });
+
+    it("stopListening method removes event listeners", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getTestComponent(channelName, event, mockCallback);
+        const mockChannel = echoInstance.private(channelName);
+
+        wrapper.vm.stopListening();
+
+        expect(mockChannel.stopListening).toHaveBeenCalledWith(
+            event,
+            mockCallback,
+        );
+    });
+
+    it("stopListening method is a no-op when not listening", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        wrapper = getTestComponent(channelName, event, mockCallback);
+        const mockChannel = echoInstance.private(channelName);
+
+        wrapper.vm.stopListening();
+        wrapper.vm.stopListening();
+
+        expect(mockChannel.stopListening).toHaveBeenCalledTimes(1);
+    });
+
+    it("listen and stopListening work with multiple events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const events = ["event1", "event2"];
+
+        wrapper = getTestComponent(channelName, events, mockCallback);
+        const mockChannel = echoInstance.private(channelName);
+
+        events.forEach((event) => {
+            expect(mockChannel.listen).toHaveBeenCalledWith(
+                event,
+                mockCallback,
+            );
+        });
+
+        wrapper.vm.stopListening();
+        wrapper.vm.listen();
+
+        events.forEach((event) => {
+            expect(mockChannel.listen).toHaveBeenCalledWith(
+                event,
+                mockCallback,
+            );
+        });
+
+        wrapper.vm.stopListening();
+
+        events.forEach((event) => {
+            expect(mockChannel.stopListening).toHaveBeenCalledWith(
+                event,
+                mockCallback,
+            );
+        });
     });
 });
 
