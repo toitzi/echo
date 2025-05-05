@@ -3,13 +3,11 @@ import Echo from "laravel-echo";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent } from "vue";
 import {
-    configureEcho,
     useEcho,
     useEchoPresence,
     useEchoPublic,
-} from "../src/composable/useEcho";
-
-const getEchoModule = async () => import("../src/composable/useEcho");
+} from "../src/composables/useEcho";
+import { configureEcho } from "../src/config/index";
 
 const getUnConfiguredTestComponent = (
     channelName: string,
@@ -137,32 +135,6 @@ vi.mock("laravel-echo", () => {
     Echo.prototype.join = vi.fn(() => mockPresenceChannel);
 
     return { default: Echo };
-});
-
-describe("echo helper", async () => {
-    beforeEach(() => {
-        vi.resetModules();
-    });
-
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-
-    it("throws error when Echo is not configured", async () => {
-        const echoModule = await getEchoModule();
-
-        expect(() => echoModule.echo()).toThrow("Echo has not been configured");
-    });
-
-    it("creates Echo instance with proper configuration", async () => {
-        const echoModule = await getEchoModule();
-
-        echoModule.configureEcho({
-            broadcaster: "null",
-        });
-
-        expect(echoModule.echo()).toBeDefined();
-    });
 });
 
 describe("without echo configured", async () => {

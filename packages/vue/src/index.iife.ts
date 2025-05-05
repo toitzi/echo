@@ -1,1 +1,1 @@
-export { configureEcho, echo, useEcho } from "./composable/useEcho";
+export { configureEcho, echo, useEcho } from "./composables/useEcho";
