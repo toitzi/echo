@@ -104,6 +104,10 @@ export const useEcho = <
         visibility,
     };
 
+    events.forEach((e) => {
+        callbacks.current[e] = (payload: TPayload) => callback(payload, e);
+    });
+
     const stopListening = useCallback(() => {
         if (!listening.current) {
             return;
@@ -127,11 +131,7 @@ export const useEcho = <
 
         events.forEach((e) => {
             if (e !== "*") {
-                const cb =
-                    callbacks.current[e] ??
-                    ((payload: TPayload) => callback(payload, e));
-
-                subscription.current!.listen(e, cb);
+                subscription.current!.listen(e, callbacks.current[e]);
             } else if ("listenToAll" in subscription.current!) {
                 subscription.current.listenToAll(allCallbackFunc);
             } else {
