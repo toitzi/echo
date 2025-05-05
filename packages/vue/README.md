@@ -1,11 +1,11 @@
-# Laravel Echo React Helpers
+# Laravel Echo Vue Helpers
 
 ## `configureEcho`
 
 You must call this function somewhere in your app _before_ you use `useEcho` in a component to configure your Echo instance. You only need to pass the required data:
 
 ```ts
-import { configureEcho } from "@laravel/echo-react";
+import { configureEcho } from "@laravel/echo-vue";
 
 configureEcho({
     broadcaster: "reverb",
@@ -32,7 +32,7 @@ In the above example, the configuration would also fill in the following keys if
 Connect to private channel:
 
 ```ts
-import { useEcho } from "@laravel/echo-react";
+import { useEcho } from "@laravel/echo-vue";
 
 const { leaveChannel, leave, stopListening, listen } = useEcho(
     `orders.${orderId}`,
