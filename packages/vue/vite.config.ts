@@ -41,6 +41,28 @@ const config: UserConfig = (() => {
                 include: ["src/**/*.ts"],
             }),
         ],
+        define: {
+            "import.meta.env.VITE_REVERB_KEY":
+                "import.meta.env.VITE_REVERB_KEY",
+            "import.meta.env.VITE_REVERB_HOST":
+                "import.meta.env.VITE_REVERB_HOST",
+            "import.meta.env.VITE_REVERB_PORT":
+                "import.meta.env.VITE_REVERB_PORT",
+            "import.meta.env.VITE_REVERB_SCHEME":
+                "import.meta.env.VITE_REVERB_SCHEME",
+            "import.meta.env.VITE_PUSHER_APP_KEY":
+                "import.meta.env.VITE_PUSHER_APP_KEY",
+            "import.meta.env.VITE_PUSHER_APP_CLUSTER":
+                "import.meta.env.VITE_PUSHER_APP_CLUSTER",
+            "import.meta.env.VITE_PUSHER_HOST":
+                "import.meta.env.VITE_PUSHER_HOST",
+            "import.meta.env.VITE_PUSHER_PORT":
+                "import.meta.env.VITE_PUSHER_PORT",
+            "import.meta.env.VITE_SOCKET_IO_HOST":
+                "import.meta.env.VITE_SOCKET_IO_HOST",
+            "import.meta.env.VITE_ABLY_PUBLIC_KEY":
+                "import.meta.env.VITE_ABLY_PUBLIC_KEY",
+        },
         build: {
             lib: {
                 entry: resolve(__dirname, "src/index.ts"),
