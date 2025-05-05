@@ -204,14 +204,18 @@ export const useEchoPublic = <
     );
 };
 
-export const useEchoModel = <TPayload, TModel extends string>(
+export const useEchoModel = <
+    TPayload,
+    TModel extends string,
+    TDriver extends BroadcastDriver = BroadcastDriver,
+>(
     model: TModel,
     identifier: string | number,
     event: ModelEvents<TModel> | ModelEvents<TModel>[],
     callback: (payload: ModelPayload<TPayload>) => void,
     dependencies: any[] = [],
 ) => {
-    return useEcho<ModelPayload<TPayload>>(
+    return useEcho<ModelPayload<TPayload>, TDriver, "private">(
         `${model}.${identifier}`,
         toArray(event).map((e) => (e.startsWith(".") ? e : `.${e}`)),
         callback,
