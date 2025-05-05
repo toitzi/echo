@@ -2,7 +2,8 @@ import { renderHook } from "@testing-library/react";
 import Echo from "laravel-echo";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const getEchoModule = async () => import("../src/hook/use-echo");
+const getEchoModule = async () => import("../src/hooks/use-echo");
+const getConfigModule = async () => import("../src/config/index");
 
 vi.mock("laravel-echo", () => {
     const mockPrivateChannel = {
@@ -41,28 +42,6 @@ vi.mock("laravel-echo", () => {
     return { default: Echo };
 });
 
-describe("echo helper", async () => {
-    beforeEach(() => {
-        vi.resetModules();
-    });
-
-    it("throws error when Echo is not configured", async () => {
-        const echoModule = await getEchoModule();
-
-        expect(() => echoModule.echo()).toThrow("Echo has not been configured");
-    });
-
-    it("creates Echo instance with proper configuration", async () => {
-        const echoModule = await getEchoModule();
-
-        echoModule.configureEcho({
-            broadcaster: "null",
-        });
-
-        expect(echoModule.echo()).toBeDefined();
-    });
-});
-
 describe("without echo configured", async () => {
     beforeEach(() => {
         vi.resetModules();
@@ -89,7 +68,8 @@ describe("without echo configured", async () => {
 });
 
 describe("useEcho hook", async () => {
-    let echoModule: typeof import("../src/hook/use-echo");
+    let echoModule: typeof import("../src/hooks/use-echo");
+    let configModule: typeof import("../src/config/index");
     let echoInstance: Echo<"null">;
 
     beforeEach(async () => {
@@ -100,8 +80,9 @@ describe("useEcho hook", async () => {
         });
 
         echoModule = await getEchoModule();
+        configModule = await getConfigModule();
 
-        echoModule.configureEcho({
+        configModule.configureEcho({
             broadcaster: "null",
         });
     });
@@ -258,10 +239,79 @@ describe("useEcho hook", async () => {
 
         expect(echoInstance.leaveChannel).toHaveBeenCalledWith(channelName);
     });
+
+    it("can manually start listening to events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { result } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        const channel = echoInstance.private(channelName);
+
+        expect(channel.listen).toHaveBeenCalledWith(event, mockCallback);
+
+        result.current.stopListening();
+
+        expect(channel.stopListening).toHaveBeenCalledWith(event, mockCallback);
+
+        result.current.listen();
+
+        expect(channel.listen).toHaveBeenCalledWith(event, mockCallback);
+    });
+
+    it("can manually stop listening to events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { result } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        result.current.stopListening();
+
+        const channel = echoInstance.private(channelName);
+        expect(channel.stopListening).toHaveBeenCalledWith(event, mockCallback);
+    });
+
+    it("stopListening is a no-op when not listening", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { result } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        result.current.stopListening();
+        result.current.stopListening();
+
+        const channel = echoInstance.private(channelName);
+        expect(channel.stopListening).toHaveBeenCalledTimes(1);
+    });
+
+    it("listen is a no-op when already listening", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const event = "test-event";
+
+        const { result } = renderHook(() =>
+            echoModule.useEcho(channelName, event, mockCallback),
+        );
+
+        result.current.listen();
+
+        const channel = echoInstance.private(channelName);
+        expect(channel.listen).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe("useEchoModel hook", async () => {
-    let echoModule: typeof import("../src/hook/use-echo");
+    let echoModule: typeof import("../src/hooks/use-echo");
+    let configModule: typeof import("../src/config/index");
     let echoInstance: Echo<"null">;
 
     beforeEach(async () => {
@@ -272,8 +322,9 @@ describe("useEchoModel hook", async () => {
         });
 
         echoModule = await getEchoModule();
+        configModule = await getConfigModule();
 
-        echoModule.configureEcho({
+        configModule.configureEcho({
             broadcaster: "null",
         });
     });
@@ -476,7 +527,8 @@ describe("useEchoModel hook", async () => {
 });
 
 describe("useEchoPublic hook", async () => {
-    let echoModule: typeof import("../src/hook/use-echo");
+    let echoModule: typeof import("../src/hooks/use-echo");
+    let configModule: typeof import("../src/config/index");
     let echoInstance: Echo<"null">;
 
     beforeEach(async () => {
@@ -487,8 +539,9 @@ describe("useEchoPublic hook", async () => {
         });
 
         echoModule = await getEchoModule();
+        configModule = await getConfigModule();
 
-        echoModule.configureEcho({
+        configModule.configureEcho({
             broadcaster: "null",
         });
     });
@@ -611,7 +664,8 @@ describe("useEchoPublic hook", async () => {
 });
 
 describe("useEchoPresence hook", async () => {
-    let echoModule: typeof import("../src/hook/use-echo");
+    let echoModule: typeof import("../src/hooks/use-echo");
+    let configModule: typeof import("../src/config/index");
     let echoInstance: Echo<"null">;
 
     beforeEach(async () => {
@@ -622,8 +676,9 @@ describe("useEchoPresence hook", async () => {
         });
 
         echoModule = await getEchoModule();
+        configModule = await getConfigModule();
 
-        echoModule.configureEcho({
+        configModule.configureEcho({
             broadcaster: "null",
         });
     });
