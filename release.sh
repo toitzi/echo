@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Function to get current version from package.json
 get_current_version() {
     local package_json=$1
     if [ -f "$package_json" ]; then
@@ -11,7 +10,6 @@ get_current_version() {
     fi
 }
 
-# Function to get package name from package.json
 get_package_name() {
     local package_json=$1
     if [ -f "$package_json" ]; then
@@ -22,7 +20,12 @@ get_package_name() {
     fi
 }
 
-# Function to update version
+if [ -n "$(git status --porcelain)" ]; then
+    echo "Error: There are uncommitted changes in the working directory"
+    echo "Please commit or stash these changes before proceeding"
+    exit 1
+fi
+
 update_version() {
     local package_dir=$1
     local version_type=$2
@@ -44,28 +47,23 @@ update_version() {
     esac
 }
 
-# Main script
 echo "Starting package version management..."
 
-# Get root package version
 root_package_json="packages/laravel-echo/package.json"
 current_version=$(get_current_version "$root_package_json")
 echo ""
 echo "Current version: $current_version"
 echo ""
 
-# Get version type once
 read -p "Update version? (patch/minor/major): " version_type
 echo ""
 
-# Iterate through packages directory
 for package_dir in packages/*; do
     if [ -d "$package_dir" ]; then
         echo "Updating version for $package_dir"
 
         cd $package_dir
 
-        # Update version
         update_version "$package_dir" "$version_type"
 
         cd ../..
@@ -74,14 +72,19 @@ for package_dir in packages/*; do
     fi
 done
 
-# Get new version from root package
 new_version=$(get_current_version "$root_package_json")
 
-# Install dependencies
 echo "Updating lock file..."
 pnpm i
 
-# Create single git tag
+echo "Staging package.json files..."
+git add "**/package.json"
+echo ""
+
+echo "Committing version changes..."
+git commit -m "v$new_version"
+echo ""
+
 echo ""
 echo "Creating git tag: v$new_version"
 git tag "v$new_version"
@@ -89,7 +92,16 @@ echo ""
 
 echo "Running release process..."
 echo ""
-pnpm -r run release
+
+for package_dir in packages/*; do
+    if [ -d "$package_dir" ]; then
+        echo "Releasing $package_dir"
+        cd $package_dir
+        pnpm run release
+        cd ../..
+        echo ""
+    fi
+done
 
 # Echo joke
 echo "Released! (Released!) (Released!)"
