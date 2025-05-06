@@ -102,3 +102,11 @@ useEchoPresence("posts", "PostPublished", (e) => {
     console.log(e.post);
 });
 ```
+
+Listening for model events:
+
+```ts
+useEchoModel("App.Models.User", userId, ["UserCreated", "UserUpdated"], (e) => {
+    console.log(e.model);
+});
+```
