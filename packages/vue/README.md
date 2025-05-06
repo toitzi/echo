@@ -67,14 +67,6 @@ useEcho(
 );
 ```
 
-All events:
-
-```ts
-useEcho(`orders.${orderId}`, "*", (e) => {
-    console.log(e.order);
-});
-```
-
 Specify shape of payload data:
 
 ```ts
