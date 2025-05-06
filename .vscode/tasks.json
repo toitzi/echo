@@ -4,13 +4,13 @@
         {
             "type": "npm",
             "script": "build",
-            "path": ".",
+            "path": "packages/react",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "problemMatcher": [],
-            "label": "pnpm: build all packages",
+            "label": "npm: build - packages/react",
             "detail": "vite build && FORMAT=iife vite build"
         }
     ]

@@ -23,9 +23,6 @@ export type ConfigDefaults<O extends BroadcastDriver> = Record<
 
 export type ModelPayload<T> = {
     model: T;
-    connection: string | null;
-    queue: string | null;
-    afterCommit: boolean;
 };
 
 export type ChannelReturnType<
@@ -43,18 +40,18 @@ export type ModelName<T extends string> = T extends `${infer _}.${infer U}`
     : T;
 
 export type ModelEvents<T extends string> =
-    | `.${ModelName<T>}Retrieved`
-    | `.${ModelName<T>}Creating`
-    | `.${ModelName<T>}Created`
-    | `.${ModelName<T>}Updating`
-    | `.${ModelName<T>}Updated`
-    | `.${ModelName<T>}Saving`
-    | `.${ModelName<T>}Saved`
-    | `.${ModelName<T>}Deleting`
-    | `.${ModelName<T>}Deleted`
-    | `.${ModelName<T>}Trashed`
-    | `.${ModelName<T>}ForceDeleting`
-    | `.${ModelName<T>}ForceDeleted`
-    | `.${ModelName<T>}Restoring`
-    | `.${ModelName<T>}Restored`
-    | `.${ModelName<T>}Replicating`;
+    | `${ModelName<T>}Retrieved`
+    | `${ModelName<T>}Creating`
+    | `${ModelName<T>}Created`
+    | `${ModelName<T>}Updating`
+    | `${ModelName<T>}Updated`
+    | `${ModelName<T>}Saving`
+    | `${ModelName<T>}Saved`
+    | `${ModelName<T>}Deleting`
+    | `${ModelName<T>}Deleted`
+    | `${ModelName<T>}Trashed`
+    | `${ModelName<T>}ForceDeleting`
+    | `${ModelName<T>}ForceDeleted`
+    | `${ModelName<T>}Restoring`
+    | `${ModelName<T>}Restored`
+    | `${ModelName<T>}Replicating`;

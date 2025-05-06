@@ -122,37 +122,18 @@ describe("useEcho hook", async () => {
 
         const channel = echoInstance.private(channelName);
 
-        const firstCallback = (
-            channel.listen as unknown as ReturnType<typeof vi.fn>
-        ).mock.calls[0][1];
-        const secondCallback = (
-            channel.listen as unknown as ReturnType<typeof vi.fn>
-        ).mock.calls[1][1];
-
-        expect(channel.listen).toHaveBeenCalledWith(
-            events[0],
-            expect.any(Function),
-        );
-        expect(channel.listen).toHaveBeenCalledWith(
-            events[1],
-            expect.any(Function),
-        );
-
-        firstCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith({ data: "test" }, events[0]);
-
-        secondCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith({ data: "test" }, events[1]);
+        expect(channel.listen).toHaveBeenCalledWith(events[0], mockCallback);
+        expect(channel.listen).toHaveBeenCalledWith(events[1], mockCallback);
 
         expect(() => unmount()).not.toThrow();
 
         expect(channel.stopListening).toHaveBeenCalledWith(
             events[0],
-            firstCallback,
+            mockCallback,
         );
         expect(channel.stopListening).toHaveBeenCalledWith(
             events[1],
-            secondCallback,
+            mockCallback,
         );
     });
 
@@ -207,16 +188,10 @@ describe("useEcho hook", async () => {
 
         expect(echoInstance.private).toHaveBeenCalledWith(channelName);
 
-        const channel = echoInstance.private(channelName);
-        const callback = (channel.listen as any).mock.calls[0][1];
-
-        expect(channel.listen).toHaveBeenCalledWith(
+        expect(echoInstance.private(channelName).listen).toHaveBeenCalledWith(
             event,
-            expect.any(Function),
+            mockCallback,
         );
-
-        callback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith({ data: "test" }, event);
     });
 
     it("can leave a channel", async () => {
@@ -275,27 +250,16 @@ describe("useEcho hook", async () => {
         );
 
         const channel = echoInstance.private(channelName);
-        const callback = (channel.listen as any).mock.calls[0][1];
 
-        expect(channel.listen).toHaveBeenCalledWith(
-            event,
-            expect.any(Function),
-        );
+        expect(channel.listen).toHaveBeenCalledWith(event, mockCallback);
 
         result.current.stopListening();
 
-        expect(channel.stopListening).toHaveBeenCalledWith(event, callback);
+        expect(channel.stopListening).toHaveBeenCalledWith(event, mockCallback);
 
         result.current.listen();
 
-        const newCallback = (channel.listen as any).mock.calls[1][1];
-        expect(channel.listen).toHaveBeenCalledWith(
-            event,
-            expect.any(Function),
-        );
-
-        newCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith({ data: "test" }, event);
+        expect(channel.listen).toHaveBeenCalledWith(event, mockCallback);
     });
 
     it("can manually stop listening to events", async () => {
@@ -307,12 +271,10 @@ describe("useEcho hook", async () => {
             echoModule.useEcho(channelName, event, mockCallback),
         );
 
-        const channel = echoInstance.private(channelName);
-        const callback = (channel.listen as any).mock.calls[0][1];
-
         result.current.stopListening();
 
-        expect(channel.stopListening).toHaveBeenCalledWith(event, callback);
+        const channel = echoInstance.private(channelName);
+        expect(channel.stopListening).toHaveBeenCalledWith(event, mockCallback);
     });
 
     it("stopListening is a no-op when not listening", async () => {
@@ -399,10 +361,10 @@ describe("useEchoModel hook", async () => {
         const events = ["UserCreated", "UserUpdated"];
 
         const { result, unmount } = renderHook(() =>
-            echoModule.useEchoModel<any, "App.Models.User">(
+            echoModule.useEchoModel<any, typeof model>(
                 model,
                 identifier,
-                events,
+                ["UserCreated", "UserUpdated"],
                 mockCallback,
             ),
         );
@@ -413,39 +375,25 @@ describe("useEchoModel hook", async () => {
         expect(echoInstance.private).toHaveBeenCalledWith(expectedChannelName);
 
         const channel = echoInstance.private(expectedChannelName);
-        const firstCallback = (channel.listen as any).mock.calls[0][1];
-        const secondCallback = (channel.listen as any).mock.calls[1][1];
 
         expect(channel.listen).toHaveBeenCalledWith(
             `.${events[0]}`,
-            expect.any(Function),
+            mockCallback,
         );
         expect(channel.listen).toHaveBeenCalledWith(
             `.${events[1]}`,
-            expect.any(Function),
-        );
-
-        firstCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith(
-            { data: "test" },
-            `.${events[0]}`,
-        );
-
-        secondCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith(
-            { data: "test" },
-            `.${events[1]}`,
+            mockCallback,
         );
 
         expect(() => unmount()).not.toThrow();
 
         expect(channel.stopListening).toHaveBeenCalledWith(
             `.${events[0]}`,
-            firstCallback,
+            mockCallback,
         );
         expect(channel.stopListening).toHaveBeenCalledWith(
             `.${events[1]}`,
-            secondCallback,
+            mockCallback,
         );
     });
 
@@ -574,18 +522,7 @@ describe("useEchoModel hook", async () => {
         expect(echoInstance.private).toHaveBeenCalledWith(expectedChannelName);
 
         const channel = echoInstance.private(expectedChannelName);
-        const callback = (channel.listen as any).mock.calls[0][1];
-
-        expect(channel.listen).toHaveBeenCalledWith(
-            `.${event}`,
-            expect.any(Function),
-        );
-
-        callback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith(
-            { data: "test" },
-            `.${event}`,
-        );
+        expect(channel.listen).toHaveBeenCalledWith(`.${event}`, mockCallback);
     });
 });
 
@@ -642,33 +579,19 @@ describe("useEchoPublic hook", async () => {
         expect(echoInstance.channel).toHaveBeenCalledWith(channelName);
 
         const channel = echoInstance.channel(channelName);
-        const firstCallback = (channel.listen as any).mock.calls[0][1];
-        const secondCallback = (channel.listen as any).mock.calls[1][1];
 
-        expect(channel.listen).toHaveBeenCalledWith(
-            events[0],
-            expect.any(Function),
-        );
-        expect(channel.listen).toHaveBeenCalledWith(
-            events[1],
-            expect.any(Function),
-        );
-
-        firstCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith({ data: "test" }, events[0]);
-
-        secondCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith({ data: "test" }, events[1]);
+        expect(channel.listen).toHaveBeenCalledWith(events[0], mockCallback);
+        expect(channel.listen).toHaveBeenCalledWith(events[1], mockCallback);
 
         expect(() => unmount()).not.toThrow();
 
         expect(channel.stopListening).toHaveBeenCalledWith(
             events[0],
-            firstCallback,
+            mockCallback,
         );
         expect(channel.stopListening).toHaveBeenCalledWith(
             events[1],
-            secondCallback,
+            mockCallback,
         );
     });
 
@@ -785,6 +708,36 @@ describe("useEchoPresence hook", async () => {
         expect(typeof result.current.channel().whisper).toBe("function");
     });
 
+    it("handles multiple events", async () => {
+        const mockCallback = vi.fn();
+        const channelName = "test-channel";
+        const events = ["event1", "event2"];
+
+        const { result, unmount } = renderHook(() =>
+            echoModule.useEchoPresence(channelName, events, mockCallback),
+        );
+
+        expect(result.current).toHaveProperty("leaveChannel");
+
+        expect(echoInstance.join).toHaveBeenCalledWith(channelName);
+
+        const channel = echoInstance.join(channelName);
+
+        expect(channel.listen).toHaveBeenCalledWith(events[0], mockCallback);
+        expect(channel.listen).toHaveBeenCalledWith(events[1], mockCallback);
+
+        expect(() => unmount()).not.toThrow();
+
+        expect(channel.stopListening).toHaveBeenCalledWith(
+            events[0],
+            mockCallback,
+        );
+        expect(channel.stopListening).toHaveBeenCalledWith(
+            events[1],
+            mockCallback,
+        );
+    });
+
     it("cleans up subscriptions on unmount", async () => {
         const mockCallback = vi.fn();
         const channelName = "test-channel";
@@ -856,49 +809,5 @@ describe("useEchoPresence hook", async () => {
         result.current.leave();
 
         expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
-    });
-
-    it("handles multiple events", async () => {
-        const mockCallback = vi.fn();
-        const channelName = "test-channel";
-        const events = ["event1", "event2"];
-
-        const { result, unmount } = renderHook(() =>
-            echoModule.useEchoPresence(channelName, events, mockCallback),
-        );
-
-        expect(result.current).toHaveProperty("leaveChannel");
-
-        expect(echoInstance.join).toHaveBeenCalledWith(channelName);
-
-        const channel = echoInstance.join(channelName);
-        const firstCallback = (channel.listen as any).mock.calls[0][1];
-        const secondCallback = (channel.listen as any).mock.calls[1][1];
-
-        expect(channel.listen).toHaveBeenCalledWith(
-            events[0],
-            expect.any(Function),
-        );
-        expect(channel.listen).toHaveBeenCalledWith(
-            events[1],
-            expect.any(Function),
-        );
-
-        firstCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith({ data: "test" }, events[0]);
-
-        secondCallback({ data: "test" });
-        expect(mockCallback).toHaveBeenCalledWith({ data: "test" }, events[1]);
-
-        expect(() => unmount()).not.toThrow();
-
-        expect(channel.stopListening).toHaveBeenCalledWith(
-            events[0],
-            firstCallback,
-        );
-        expect(channel.stopListening).toHaveBeenCalledWith(
-            events[1],
-            secondCallback,
-        );
     });
 });
