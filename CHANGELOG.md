@@ -1,6 +1,15 @@
 # Release Notes
 
-## [Unreleased](https://github.com/laravel/echo/compare/v2.0.2...2.x)
+## [Unreleased](https://github.com/laravel/echo/compare/v2.1.0...2.x)
+
+## [v2.1.0](https://github.com/laravel/echo/compare/v2.0.2...v2.1.0) - 2025-05-07
+
+* fixes: unable to build by [@fxnm](https://github.com/fxnm) in https://github.com/laravel/echo/pull/419
+* Update logo by [@iamdavidhill](https://github.com/iamdavidhill) in https://github.com/laravel/echo/pull/421
+* CI Improvements by [@crynobone](https://github.com/crynobone) in https://github.com/laravel/echo/pull/424
+* React/Vue Typescript Hooks by [@tnylea](https://github.com/tnylea) in https://github.com/laravel/echo/pull/422
+* Final hook prep by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/426
+* Added listen to `*`, stronger typing by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/427
 
 ## [v2.0.2](https://github.com/laravel/echo/compare/v2.0.0...v2.0.2) - 2025-02-18
 
