@@ -1,7 +1,7 @@
 {
     "name": "@laravel/echo-react",
     "version": "2.1.0",
-    "description": "Laravel Echo library for beautiful Pusher and Socket.IO integration",
+    "description": "React hooks for seamless integration with Laravel Echo.",
     "keywords": [
         "laravel",
         "pusher",
