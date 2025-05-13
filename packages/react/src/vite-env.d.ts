@@ -7,7 +7,7 @@ interface ImportMetaEnv {
     readonly VITE_PUSHER_PORT: number;
 
     readonly VITE_REVERB_HOST: string;
-    readonly VITE_REVERB_KEY: string;
+    readonly VITE_REVERB_APP_KEY: string;
     readonly VITE_REVERB_PORT: number;
     readonly VITE_REVERB_SCHEME: string;
 

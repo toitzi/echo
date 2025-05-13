@@ -34,7 +34,7 @@ export const configureEcho = <T extends BroadcastDriver>(
     const defaults: ConfigDefaults<BroadcastDriver> = {
         reverb: {
             broadcaster: "reverb",
-            key: import.meta.env.VITE_REVERB_KEY,
+            key: import.meta.env.VITE_REVERB_APP_KEY,
             wsHost: import.meta.env.VITE_REVERB_HOST,
             wsPort: import.meta.env.VITE_REVERB_PORT,
             wssPort: import.meta.env.VITE_REVERB_PORT,

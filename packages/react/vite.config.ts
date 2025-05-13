@@ -42,8 +42,8 @@ const config: UserConfig = (() => {
             }),
         ],
         define: {
-            "import.meta.env.VITE_REVERB_KEY":
-                "import.meta.env.VITE_REVERB_KEY",
+            "import.meta.env.VITE_REVERB_APP_KEY":
+                "import.meta.env.VITE_REVERB_APP_KEY",
             "import.meta.env.VITE_REVERB_HOST":
                 "import.meta.env.VITE_REVERB_HOST",
             "import.meta.env.VITE_REVERB_PORT":
