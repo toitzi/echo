@@ -80,8 +80,8 @@ export const useEcho = <
     TVisibility extends Channel["visibility"] = "private",
 >(
     channelName: string,
-    event: string | string[],
-    callback: (payload: TPayload) => void,
+    event: string | string[] = [],
+    callback: (payload: TPayload) => void = () => {},
     dependencies: any[] = [],
     visibility: TVisibility = "private" as TVisibility,
 ) => {
@@ -193,8 +193,8 @@ export const useEchoPresence = <
     TDriver extends BroadcastDriver = BroadcastDriver,
 >(
     channelName: string,
-    event: string | string[],
-    callback: (payload: TPayload) => void,
+    event: string | string[] = [],
+    callback: (payload: TPayload) => void = () => {},
     dependencies: any[] = [],
 ) => {
     return useEcho<TPayload, TDriver, "presence">(
@@ -211,8 +211,8 @@ export const useEchoPublic = <
     TDriver extends BroadcastDriver = BroadcastDriver,
 >(
     channelName: string,
-    event: string | string[],
-    callback: (payload: TPayload) => void,
+    event: string | string[] = [],
+    callback: (payload: TPayload) => void = () => {},
     dependencies: any[] = [],
 ) => {
     return useEcho<TPayload, TDriver, "public">(
