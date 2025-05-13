@@ -69,6 +69,7 @@ export default class Echo<T extends keyof Broadcaster> {
         } else if (this.options.broadcaster === "ably") {
             this.connector = new PusherConnector<"pusher">({
                 ...this.options,
+                cluster: "",
                 broadcaster: "pusher",
             });
         } else if (this.options.broadcaster === "socket.io") {
