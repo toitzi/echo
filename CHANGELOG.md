@@ -1,6 +1,15 @@
 # Release Notes
 
-## [Unreleased](https://github.com/laravel/echo/compare/v2.1.0...2.x)
+## [Unreleased](https://github.com/laravel/echo/compare/v2.1.1...2.x)
+
+## [v2.1.1](https://github.com/laravel/echo/compare/v2.1.0...v2.1.1) - 2025-05-13
+
+### What's Changed
+
+* Fix Ably cluster error by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/429
+* Make events and listeners optional by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/430
+
+**Full Changelog**: https://github.com/laravel/echo/compare/v2.1.0...v2.1.1
 
 ## [v2.1.0](https://github.com/laravel/echo/compare/v2.0.2...v2.1.0) - 2025-05-07
 
