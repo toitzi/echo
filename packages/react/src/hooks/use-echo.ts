@@ -75,7 +75,7 @@ export const useEcho = <
 >(
     channelName: string,
     event: string | string[] = [],
-    callback: (payload: TPayload) => void = () => {},
+    callback: (payload: TPayload, event: string) => void = () => {},
     dependencies: any[] = [],
     visibility: TVisibility = "private" as TVisibility,
 ) => {
@@ -102,7 +102,9 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription.current.stopListening(e, callbackFunc);
+            subscription.current.stopListening(e, (payload: TPayload) =>
+                callbackFunc(payload, e),
+            );
         });
 
         listening.current = false;
@@ -114,7 +116,9 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription.current.listen(e, callbackFunc);
+            subscription.current.listen(e, (payload: TPayload) =>
+                callbackFunc(payload, e),
+            );
         });
 
         listening.current = true;
@@ -169,7 +173,7 @@ export const useEchoPresence = <
 >(
     channelName: string,
     event: string | string[] = [],
-    callback: (payload: TPayload) => void = () => {},
+    callback: (payload: TPayload, event: string) => void = () => {},
     dependencies: any[] = [],
 ) => {
     return useEcho<TPayload, TDriver, "presence">(
@@ -187,7 +191,7 @@ export const useEchoPublic = <
 >(
     channelName: string,
     event: string | string[] = [],
-    callback: (payload: TPayload) => void = () => {},
+    callback: (payload: TPayload, event: string) => void = () => {},
     dependencies: any[] = [],
 ) => {
     return useEcho<TPayload, TDriver, "public">(
@@ -207,7 +211,10 @@ export const useEchoModel = <
     model: TModel,
     identifier: string | number,
     event: ModelEvents<TModel> | ModelEvents<TModel>[] = [],
-    callback: (payload: ModelPayload<TPayload>) => void = () => {},
+    callback: (
+        payload: ModelPayload<TPayload>,
+        event: string,
+    ) => void = () => {},
     dependencies: any[] = [],
 ) => {
     return useEcho<ModelPayload<TPayload>, TDriver, "private">(
