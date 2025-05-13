@@ -307,6 +307,15 @@ describe("useEcho hook", async () => {
         const channel = echoInstance.private(channelName);
         expect(channel.listen).toHaveBeenCalledTimes(1);
     });
+
+    it("events and listeners are optional", async () => {
+        const channelName = "test-channel";
+
+        const { result } = renderHook(() => echoModule.useEcho(channelName));
+
+        expect(result.current).toHaveProperty("channel");
+        expect(result.current.channel).not.toBeNull();
+    });
 });
 
 describe("useEchoModel hook", async () => {
@@ -524,6 +533,18 @@ describe("useEchoModel hook", async () => {
         const channel = echoInstance.private(expectedChannelName);
         expect(channel.listen).toHaveBeenCalledWith(`.${event}`, mockCallback);
     });
+
+    it("events and listeners are optional", async () => {
+        const model = "App.Models.User.Profile";
+        const identifier = "123";
+
+        const { result } = renderHook(() =>
+            echoModule.useEchoModel(model, identifier),
+        );
+
+        expect(result.current).toHaveProperty("channel");
+        expect(result.current.channel).not.toBeNull();
+    });
 });
 
 describe("useEchoPublic hook", async () => {
@@ -660,6 +681,17 @@ describe("useEchoPublic hook", async () => {
         result.current.leave();
 
         expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
+    });
+
+    it("events and listeners are optional", async () => {
+        const channelName = "test-channel";
+
+        const { result } = renderHook(() =>
+            echoModule.useEchoPublic(channelName),
+        );
+
+        expect(result.current).toHaveProperty("channel");
+        expect(result.current.channel).not.toBeNull();
     });
 });
 
@@ -809,5 +841,16 @@ describe("useEchoPresence hook", async () => {
         result.current.leave();
 
         expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
+    });
+
+    it("events and listeners are optional", async () => {
+        const channelName = "test-channel";
+
+        const { result } = renderHook(() =>
+            echoModule.useEchoPresence(channelName),
+        );
+
+        expect(result.current).toHaveProperty("channel");
+        expect(result.current.channel).not.toBeNull();
     });
 });

@@ -29,8 +29,8 @@ const getUnConfiguredTestComponent = (
 
 const getTestComponent = (
     channelName: string,
-    event: string | string[],
-    callback: (data: any) => void,
+    event: string | string[] | undefined,
+    callback: ((data: any) => void) | undefined,
     dependencies: any[] = [],
     visibility: "private" | "public" = "private",
 ) => {
@@ -58,8 +58,8 @@ const getTestComponent = (
 
 const getPublicTestComponent = (
     channelName: string,
-    event: string | string[],
-    callback: (data: any) => void,
+    event: string | string[] | undefined,
+    callback: ((data: any) => void) | undefined,
     dependencies: any[] = [],
 ) => {
     const TestComponent = defineComponent({
@@ -80,8 +80,8 @@ const getPublicTestComponent = (
 
 const getPresenceTestComponent = (
     channelName: string,
-    event: string | string[],
-    callback: (data: any) => void,
+    event: string | string[] | undefined,
+    callback: ((data: any) => void) | undefined,
     dependencies: any[] = [],
 ) => {
     const TestComponent = defineComponent({
@@ -416,6 +416,14 @@ describe("useEcho hook", async () => {
             );
         });
     });
+
+    it("events and listeners are optional", async () => {
+        const channelName = "test-channel";
+
+        wrapper = getTestComponent(channelName, undefined, undefined);
+
+        expect(wrapper.vm.channel).not.toBeNull();
+    });
 });
 
 describe("useEchoPublic hook", async () => {
@@ -537,6 +545,14 @@ describe("useEchoPublic hook", async () => {
         wrapper.vm.leave();
 
         expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
+    });
+
+    it("events and listeners are optional", async () => {
+        const channelName = "test-channel";
+
+        wrapper = getPublicTestComponent(channelName, undefined, undefined);
+
+        expect(wrapper.vm.channel).not.toBeNull();
     });
 });
 
@@ -672,5 +688,13 @@ describe("useEchoPresence hook", async () => {
         wrapper.vm.leave();
 
         expect(echoInstance.leave).toHaveBeenCalledWith(channelName);
+    });
+
+    it("events and listeners are optional", async () => {
+        const channelName = "test-channel";
+
+        wrapper = getPresenceTestComponent(channelName, undefined, undefined);
+
+        expect(wrapper.vm.channel).not.toBeNull();
     });
 });
