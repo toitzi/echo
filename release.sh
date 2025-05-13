@@ -106,3 +106,8 @@ done
 
 # Echo joke
 echo "Released! (Released!) (Released!)"
+
+echo ""
+
+echo "Release on GitHub:"
+echo "https://github.com/laravel/echo/releases/tag/v$new_version"
