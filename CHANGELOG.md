@@ -1,6 +1,14 @@
 # Release Notes
 
-## [Unreleased](https://github.com/laravel/echo/compare/v2.1.1...2.x)
+## [Unreleased](https://github.com/laravel/echo/compare/v2.1.3...2.x)
+
+## [v2.1.3](https://github.com/laravel/echo/compare/v2.1.1...v2.1.3) - 2025-05-13
+
+### What's Changed
+
+* Fix Reverb app key env name by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/431
+
+**Full Changelog**: https://github.com/laravel/echo/compare/v2.1.2...v2.1.3
 
 ## [v2.1.1](https://github.com/laravel/echo/compare/v2.1.0...v2.1.1) - 2025-05-13
 
