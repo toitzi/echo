@@ -182,7 +182,7 @@ export default class Echo<T extends keyof Broadcaster> {
     registerInterceptors(): void {
         // TODO: This package is deprecated and we should remove it in a future version.
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (Vue?.http) {
+        if (typeof Vue !== "undefined" && Vue?.http) {
             this.registerVueRequestInterceptor();
         }
 
