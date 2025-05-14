@@ -4,36 +4,47 @@ import Echo from "../src/echo";
 
 describe("Echo", () => {
     test("it will not throw error for supported driver", () => {
-        expect(() => new Echo({ broadcaster: "reverb" })).not.toThrow(
-            "Broadcaster string reverb is not supported.",
-        );
+        expect(
+            () =>
+                new Echo({ broadcaster: "reverb", withoutInterceptors: true }),
+        ).not.toThrow("Broadcaster string reverb is not supported.");
 
-        expect(() => new Echo({ broadcaster: "pusher" })).not.toThrow(
-            "Broadcaster string pusher is not supported.",
-        );
+        expect(
+            () =>
+                new Echo({ broadcaster: "pusher", withoutInterceptors: true }),
+        ).not.toThrow("Broadcaster string pusher is not supported.");
 
-        expect(() => new Echo({ broadcaster: "socket.io" })).not.toThrow(
-            "Broadcaster string socket.io is not supported.",
-        );
+        expect(
+            () =>
+                new Echo({
+                    broadcaster: "socket.io",
+                    withoutInterceptors: true,
+                }),
+        ).not.toThrow("Broadcaster string socket.io is not supported.");
 
-        expect(() => new Echo({ broadcaster: "null" })).not.toThrow(
-            "Broadcaster string null is not supported.",
-        );
-        expect(() => new Echo({ broadcaster: NullConnector })).not.toThrow();
-
-        // eslint-disable-next-line
-        // @ts-ignore
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        expect(() => new Echo({ broadcaster: () => {} })).not.toThrow(
-            "Broadcaster function is not supported.",
-        );
+        expect(
+            () => new Echo({ broadcaster: "null", withoutInterceptors: true }),
+        ).not.toThrow("Broadcaster string null is not supported.");
+        expect(
+            () =>
+                new Echo({
+                    broadcaster: NullConnector,
+                    withoutInterceptors: true,
+                }),
+        ).not.toThrow();
+        expect(
+            () =>
+                // @ts-ignore
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
+                new Echo({ broadcaster: () => {}, withoutInterceptors: true }),
+        ).not.toThrow("Broadcaster function is not supported.");
     });
 
     test("it will throw error for unsupported driver", () => {
-        // eslint-disable-next-line
-        // @ts-ignore
-        expect(() => new Echo({ broadcaster: "foo" })).toThrow(
-            "Broadcaster string foo is not supported.",
-        );
+        expect(
+            // @ts-ignore
+            // eslint-disable-next-line
+            () => new Echo({ broadcaster: "foo", withoutInterceptors: true }),
+        ).toThrow("Broadcaster string foo is not supported.");
     });
 });

@@ -356,6 +356,7 @@ type GenericOptions<TBroadcaster extends keyof Broadcaster> = {
     host?: string | null;
     key?: string | null;
     namespace?: string | false;
+    withoutInterceptors?: boolean;
 
     [key: string]: any;
 };
