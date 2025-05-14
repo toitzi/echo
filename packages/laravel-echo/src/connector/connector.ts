@@ -90,25 +90,14 @@ export abstract class Connector<
      * Extract the CSRF token from the page.
      */
     protected csrfToken(): null | string {
-        let selector;
-
-        if (window?.Laravel?.csrfToken) {
-            return window.Laravel.csrfToken;
-        }
-
-        if (this.options.csrfToken) {
-            return this.options.csrfToken;
-        }
-
-        if (
-            typeof document !== "undefined" &&
-            typeof document.querySelector === "function" &&
-            (selector = document.querySelector('meta[name="csrf-token"]'))
-        ) {
-            return selector.getAttribute("content");
-        }
-
-        return null;
+        return (
+            window?.Laravel?.csrfToken ??
+            this.options.csrfToken ??
+            document
+                ?.querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content") ??
+            null
+        );
     }
 
     /**
