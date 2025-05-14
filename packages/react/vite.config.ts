@@ -1,6 +1,26 @@
 import { resolve } from "path";
-import { defineConfig, UserConfig } from "vite";
+import { defineConfig, PluginOption, UserConfig } from "vite";
 import dts from "vite-plugin-dts";
+
+const handleEnvVariablesPlugin = (): PluginOption => {
+    return {
+        name: "handle-env-variables-plugin",
+        generateBundle(options, bundle) {
+            for (const fileName in bundle) {
+                const file = bundle[fileName];
+
+                if (file.type === "chunk" && file.fileName.endsWith(".js")) {
+                    const transformedContent = file.code.replace(
+                        /import\.meta\.env\.VITE_([A-Z0-9_]+)/g,
+                        "(typeof import.meta.env !== 'undefined' ? import.meta.env.VITE_$1 : undefined)",
+                    );
+
+                    file.code = transformedContent;
+                }
+            }
+        },
+    };
+};
 
 const config: UserConfig = (() => {
     const common: Partial<UserConfig["build"]> = {
@@ -40,6 +60,7 @@ const config: UserConfig = (() => {
                 rollupTypes: true,
                 include: ["src/**/*.ts"],
             }),
+            handleEnvVariablesPlugin(),
         ],
         define: {
             "import.meta.env.VITE_REVERB_APP_KEY":
