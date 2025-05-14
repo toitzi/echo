@@ -4,7 +4,6 @@ import { echo } from "../config";
 import type {
     Channel,
     ChannelData,
-    ChannelReturnType,
     Connection,
     ModelEvents,
     ModelPayload,
@@ -15,7 +14,7 @@ const channels: Record<string, ChannelData<BroadcastDriver>> = {};
 
 const resolveChannelSubscription = <T extends BroadcastDriver>(
     channel: Channel,
-): Connection<T> | null => {
+): Connection<T> => {
     if (channels[channel.id]) {
         channels[channel.id].count += 1;
 
@@ -23,12 +22,6 @@ const resolveChannelSubscription = <T extends BroadcastDriver>(
     }
 
     const channelSubscription = subscribeToChannel<T>(channel);
-
-    if (!channelSubscription) {
-        // eslint-disable-next-line no-console
-        console.warn(`Failed to subscribe to channel: ${channel.id}`);
-        return null;
-    }
 
     channels[channel.id] = {
         count: 1,
@@ -95,8 +88,6 @@ export const useEcho = <
         },
     );
 
-    let subscription: Connection<TDriver> | null = null;
-    const events = Array.isArray(event) ? event : [event];
     const channel: Channel = {
         name: channelName,
         id: ["private", "presence"].includes(visibility)
@@ -105,13 +96,11 @@ export const useEcho = <
         visibility,
     };
 
+    const subscription: Connection<TDriver> =
+        resolveChannelSubscription<TDriver>(channel);
+    const events = Array.isArray(event) ? event : [event];
+
     const setupSubscription = () => {
-        subscription = resolveChannelSubscription<TDriver>(channel);
-
-        if (!subscription) {
-            return;
-        }
-
         listen();
     };
 
@@ -121,7 +110,7 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription!.listen(e, eventCallback.value);
+            subscription.listen(e, eventCallback.value);
         });
 
         listening.value = true;
@@ -133,7 +122,7 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription!.stopListening(e, eventCallback.value);
+            subscription.stopListening(e, eventCallback.value);
         });
 
         listening.value = false;
@@ -184,7 +173,7 @@ export const useEcho = <
         /**
          * Channel instance
          */
-        channel: () => subscription! as ChannelReturnType<TDriver, TVisibility>,
+        channel: () => subscription,
     };
 };
 
@@ -231,8 +220,8 @@ export const useEchoModel = <
 >(
     model: TModel,
     identifier: string | number,
-    event: ModelEvents<TModel> | ModelEvents<TModel>[],
-    callback: (payload: ModelPayload<TPayload>) => void,
+    event: ModelEvents<TModel> | ModelEvents<TModel>[] = [],
+    callback: (payload: ModelPayload<TPayload>) => void = () => {},
     dependencies: any[] = [],
 ) => {
     return useEcho<ModelPayload<TPayload>, TDriver, "private">(

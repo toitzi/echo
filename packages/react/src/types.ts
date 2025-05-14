@@ -28,15 +28,6 @@ export type ModelPayload<T> = {
     afterCommit: boolean;
 };
 
-export type ChannelReturnType<
-    T extends BroadcastDriver,
-    V extends Channel["visibility"],
-> = V extends "presence"
-    ? Broadcaster[T]["presence"]
-    : V extends "private"
-      ? Broadcaster[T]["private"]
-      : Broadcaster[T]["public"];
-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type ModelName<T extends string> = T extends `${infer _}.${infer U}`
     ? ModelName<U>
