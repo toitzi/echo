@@ -231,8 +231,8 @@ export const useEchoModel = <
 >(
     model: TModel,
     identifier: string | number,
-    event: ModelEvents<TModel> | ModelEvents<TModel>[],
-    callback: (payload: ModelPayload<TPayload>) => void,
+    event: ModelEvents<TModel> | ModelEvents<TModel>[] = [],
+    callback: (payload: ModelPayload<TPayload>) => void = () => {},
     dependencies: any[] = [],
 ) => {
     return useEcho<ModelPayload<TPayload>, TDriver, "private">(
