@@ -1,3 +1,5 @@
+/// <reference types="window" />
+
 import type { Channel, PresenceChannel } from "../channel";
 import type { BroadcastDriver, EchoOptions } from "../echo";
 
@@ -88,29 +90,14 @@ export abstract class Connector<
      * Extract the CSRF token from the page.
      */
     protected csrfToken(): null | string {
-        let selector;
-
-        if (
-            typeof window !== "undefined" &&
-            typeof window.Laravel !== "undefined" &&
-            window.Laravel.csrfToken
-        ) {
-            return window.Laravel.csrfToken;
-        }
-
-        if (this.options.csrfToken) {
-            return this.options.csrfToken;
-        }
-
-        if (
-            typeof document !== "undefined" &&
-            typeof document.querySelector === "function" &&
-            (selector = document.querySelector('meta[name="csrf-token"]'))
-        ) {
-            return selector.getAttribute("content");
-        }
-
-        return null;
+        return (
+            window?.Laravel?.csrfToken ??
+            this.options.csrfToken ??
+            document
+                ?.querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content") ??
+            null
+        );
     }
 
     /**
