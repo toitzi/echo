@@ -1,3 +1,4 @@
+import type { InternalAxiosRequestConfig } from "axios";
 import {
     Channel,
     NullChannel,
@@ -179,7 +180,9 @@ export default class Echo<T extends keyof Broadcaster> {
      * send a connections socket id to a Laravel app with a X-Socket-Id header.
      */
     registerInterceptors(): void {
-        if (typeof Vue === "function" && Vue.http) {
+        // TODO: This package is deprecated and we should remove it in a future version.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (Vue?.http) {
             this.registerVueRequestInterceptor();
         }
 
@@ -200,12 +203,15 @@ export default class Echo<T extends keyof Broadcaster> {
      * Register a Vue HTTP interceptor to add the X-Socket-ID header.
      */
     registerVueRequestInterceptor(): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         Vue.http.interceptors.push(
             (request: Record<any, any>, next: CallableFunction) => {
                 if (this.socketId()) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                     request.headers.set("X-Socket-ID", this.socketId());
                 }
 
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                 next();
             },
         );
@@ -215,13 +221,15 @@ export default class Echo<T extends keyof Broadcaster> {
      * Register an Axios HTTP interceptor to add the X-Socket-ID header.
      */
     registerAxiosRequestInterceptor(): void {
-        axios.interceptors.request.use((config: Record<any, any>) => {
-            if (this.socketId()) {
-                config.headers["X-Socket-Id"] = this.socketId();
-            }
+        axios!.interceptors.request.use(
+            (config: InternalAxiosRequestConfig<any>) => {
+                if (this.socketId()) {
+                    config.headers["X-Socket-Id"] = this.socketId();
+                }
 
-            return config;
-        });
+                return config;
+            },
+        );
     }
 
     /**

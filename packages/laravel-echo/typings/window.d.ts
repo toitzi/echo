@@ -1,8 +1,7 @@
-import type { JQueryStatic } from "@types/jquery";
 import type { AxiosStatic } from "axios";
+import type { JQueryStatic } from "jquery";
 import type Pusher from "pusher-js";
 import type { io } from "socket.io-client";
-import type { VueElementConstructor } from "vue";
 
 declare global {
     interface Window {
@@ -13,13 +12,13 @@ declare global {
         io?: typeof io;
         Pusher?: typeof Pusher;
 
-        Vue?: VueElementConstructor;
+        Vue?: any;
         axios?: AxiosStatic;
         jQuery?: JQueryStatic;
         Turbo?: object;
     }
 
-    const Vue: VueElementConstructor | undefined;
+    const Vue: any | undefined;
     const axios: AxiosStatic | undefined;
     const jQuery: JQueryStatic | undefined;
     const Turbo: object | undefined;
