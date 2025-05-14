@@ -18,7 +18,7 @@
         "emitDecoratorMetadata": true,
         "esModuleInterop": true,
         "strict": true,
-        "typeRoots": ["node_modules/@types"],
+        "typeRoots": ["node_modules/@types", "./typings"],
         "lib": ["dom", "es2020"]
     },
     "include": ["./typings/**/*.ts", "./src/**/*.ts"],

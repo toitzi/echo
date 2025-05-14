@@ -1,3 +1,5 @@
+/// <reference types="window" />
+
 import type { Channel, PresenceChannel } from "../channel";
 import type { BroadcastDriver, EchoOptions } from "../echo";
 
@@ -90,11 +92,7 @@ export abstract class Connector<
     protected csrfToken(): null | string {
         let selector;
 
-        if (
-            typeof window !== "undefined" &&
-            typeof window.Laravel !== "undefined" &&
-            window.Laravel.csrfToken
-        ) {
+        if (window?.Laravel?.csrfToken) {
             return window.Laravel.csrfToken;
         }
 

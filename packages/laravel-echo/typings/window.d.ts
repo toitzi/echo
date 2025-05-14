@@ -1,7 +1,5 @@
-import type { io } from "socket.io-client";
 import type Pusher from "pusher-js";
-
-export {};
+import type { io } from "socket.io-client";
 
 declare global {
     interface Window {
