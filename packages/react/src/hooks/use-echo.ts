@@ -4,7 +4,6 @@ import { echo } from "../config";
 import type {
     Channel,
     ChannelData,
-    ChannelReturnType,
     Connection,
     ModelEvents,
     ModelPayload,
@@ -51,7 +50,7 @@ const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
 
 const resolveChannelSubscription = <T extends BroadcastDriver>(
     channel: Channel,
-): Connection<T> | void => {
+): Connection<T> => {
     if (channels[channel.id]) {
         channels[channel.id].count += 1;
 
@@ -59,12 +58,6 @@ const resolveChannelSubscription = <T extends BroadcastDriver>(
     }
 
     const channelSubscription = subscribeToChannel<T>(channel);
-
-    if (!channelSubscription) {
-        // eslint-disable-next-line no-console
-        console.warn(`Failed to subscribe to channel: ${channel.id}`);
-        return;
-    }
 
     channels[channel.id] = {
         count: 1,
@@ -85,11 +78,6 @@ export const useEcho = <
     dependencies: any[] = [],
     visibility: TVisibility = "private" as TVisibility,
 ) => {
-    const callbackFunc = useCallback(callback, dependencies);
-    const subscription = useRef<Connection<TDriver> | null>(null);
-    const listening = useRef(false);
-
-    const events = toArray(event);
     const channel: Channel = {
         name: channelName,
         id: ["private", "presence"].includes(visibility)
@@ -98,13 +86,22 @@ export const useEcho = <
         visibility,
     };
 
+    const callbackFunc = useCallback(callback, dependencies);
+    const listening = useRef(false);
+    const initialized = useRef(false);
+    const subscription = useRef<Connection<TDriver>>(
+        resolveChannelSubscription<TDriver>(channel),
+    );
+
+    const events = toArray(event);
+
     const stopListening = useCallback(() => {
         if (!listening.current) {
             return;
         }
 
         events.forEach((e) => {
-            subscription.current!.stopListening(e, callbackFunc);
+            subscription.current.stopListening(e, callbackFunc);
         });
 
         listening.current = false;
@@ -116,7 +113,7 @@ export const useEcho = <
         }
 
         events.forEach((e) => {
-            subscription.current!.listen(e, callbackFunc);
+            subscription.current.listen(e, callbackFunc);
         });
 
         listening.current = true;
@@ -129,14 +126,11 @@ export const useEcho = <
     }, dependencies);
 
     useEffect(() => {
-        const channelSubscription =
-            resolveChannelSubscription<TDriver>(channel);
-
-        if (!channelSubscription) {
-            return;
+        if (initialized.current) {
+            subscription.current = resolveChannelSubscription<TDriver>(channel);
         }
 
-        subscription.current = channelSubscription;
+        initialized.current = true;
 
         listen();
 
@@ -163,8 +157,7 @@ export const useEcho = <
         /**
          * Channel instance
          */
-        channel: () =>
-            subscription.current as ChannelReturnType<TDriver, TVisibility>,
+        channel: () => subscription.current,
     };
 };
 
