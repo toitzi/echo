@@ -42,7 +42,7 @@ export class PusherConnector<
      */
     channels: Record<string, AnyPusherChannel> = {};
 
-    options: PusherOptions<TBroadcastDriver>;
+    declare options: PusherOptions<TBroadcastDriver>;
 
     /**
      * Create a fresh Pusher connection.
