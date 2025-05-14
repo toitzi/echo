@@ -12,7 +12,7 @@ configureEcho({
 });
 ```
 
-Based on your brodcaster, the package will fill in appropriate defaults for the rest of the config [based on the Echo documentation](https://laravel.com/docs/broadcasting#client-side-installation). You can always override these values by simply passing in your own.
+Based on your broadcaster, the package will fill in appropriate defaults for the rest of the config [based on the Echo documentation](https://laravel.com/docs/broadcasting#client-side-installation). You can always override these values by simply passing in your own.
 
 In the above example, the configuration would also fill in the following keys if they aren't present:
 
@@ -26,6 +26,21 @@ In the above example, the configuration would also fill in the following keys if
     enabledTransports: ['ws', 'wss'],
 }
 ```
+
+### Usage in non-Vite environments
+
+When using this package in non-Vite environments (such as Next.js, Create React App, etc.), simply provide all the configuration values explicitly:
+
+```ts
+configureEcho({
+    broadcaster: "pusher",
+    key: "your-pusher-key",
+    cluster: "eu",
+    // Other required options based on your broadcaster
+});
+```
+
+This approach works in any JavaScript environment and doesn't require Vite's `import.meta.env` feature.
 
 ## `useEcho` Hook
 

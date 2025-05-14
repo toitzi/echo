@@ -34,12 +34,11 @@ export const configureEcho = <T extends BroadcastDriver>(
     const defaults: ConfigDefaults<BroadcastDriver> = {
         reverb: {
             broadcaster: "reverb",
-            key: import.meta.env.VITE_REVERB_APP_KEY,
-            wsHost: import.meta.env.VITE_REVERB_HOST,
-            wsPort: import.meta.env.VITE_REVERB_PORT,
-            wssPort: import.meta.env.VITE_REVERB_PORT,
-            forceTLS:
-                (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
+            key: (config as EchoOptions<'reverb'>)?.key ?? import.meta.env.VITE_REVERB_APP_KEY,
+            wsHost: (config as EchoOptions<'reverb'>)?.wsHost ?? import.meta.env.VITE_REVERB_HOST,
+            wsPort: (config as EchoOptions<'reverb'>)?.wsPort ?? import.meta.env.VITE_REVERB_PORT,
+            wssPort: (config as EchoOptions<'reverb'>)?.wssPort ?? import.meta.env.VITE_REVERB_PORT,
+            forceTLS: ((config as EchoOptions<'reverb'>)?.forceTLS ?? import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
             enabledTransports: ["ws", "wss"],
         },
         pusher: {
