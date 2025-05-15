@@ -4,6 +4,7 @@ import { echo } from "../config";
 import type {
     Channel,
     ChannelData,
+    ChannelReturnType,
     Connection,
     ModelEvents,
     ModelPayload,
@@ -173,7 +174,7 @@ export const useEcho = <
         /**
          * Channel instance
          */
-        channel: () => subscription,
+        channel: () => subscription as ChannelReturnType<TDriver, TVisibility>,
     };
 };
 
