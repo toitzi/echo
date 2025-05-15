@@ -1,6 +1,17 @@
 # Release Notes
 
-## [Unreleased](https://github.com/laravel/echo/compare/v2.1.3...2.x)
+## [Unreleased](https://github.com/laravel/echo/compare/v2.1.4...2.x)
+
+## [v2.1.4](https://github.com/laravel/echo/compare/v2.1.3...v2.1.4) - 2025-05-15
+
+### What's Changed
+
+* `channel` is now immediately available by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/435
+* Type fixes in core library by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/434
+* Check for import.meta.env before using Vite environment variables by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/436
+* Fix channel return type by [@joetannenbaum](https://github.com/joetannenbaum) in https://github.com/laravel/echo/pull/437
+
+**Full Changelog**: https://github.com/laravel/echo/compare/v2.1.3...v2.1.4
 
 ## [v2.1.3](https://github.com/laravel/echo/compare/v2.1.1...v2.1.3) - 2025-05-13
 
