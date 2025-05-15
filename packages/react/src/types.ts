@@ -16,6 +16,15 @@ export type Channel = {
     visibility: "private" | "public" | "presence";
 };
 
+export type ChannelReturnType<
+    T extends BroadcastDriver,
+    V extends Channel["visibility"],
+> = V extends "presence"
+    ? Broadcaster[T]["presence"]
+    : V extends "private"
+      ? Broadcaster[T]["private"]
+      : Broadcaster[T]["public"];
+
 export type ConfigDefaults<O extends BroadcastDriver> = Record<
     O,
     Broadcaster[O]["options"]
